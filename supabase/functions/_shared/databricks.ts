@@ -53,7 +53,7 @@ export async function runSql(statement: string, params: SqlParam[] = [], rowLimi
     }));
   }
 
-  const submit = await fetch(`${GATEWAY_URL}/2.0/sql/statements`, {
+  const submit = await fetch(`${GATEWAY_URL}/api/2.0/sql/statements`, {
     method: "POST",
     headers: h,
     body: JSON.stringify(body),
@@ -72,7 +72,7 @@ export async function runSql(statement: string, params: SqlParam[] = [], rowLimi
       throw new Error(`Databricks statement ${state}: ${JSON.stringify(current.status?.error ?? current.status)}`);
     }
     await new Promise((r) => setTimeout(r, 1000));
-    const poll = await fetch(`${GATEWAY_URL}/2.0/sql/statements/${id}`, { headers: h });
+    const poll = await fetch(`${GATEWAY_URL}/api/2.0/sql/statements/${id}`, { headers: h });
     current = await poll.json();
     if (!poll.ok) throw new Error(`Databricks poll failed [${poll.status}]: ${JSON.stringify(current)}`);
   }
