@@ -1,1 +1,13 @@
 project_id = "iisorhffpfxnwubdksxd"
+
+[functions.facilities-list]
+verify_jwt = false
+
+[functions.facilities-aggregate]
+verify_jwt = false
+
+[functions.nl-search]
+verify_jwt = false
+
+[functions.facility-deep-research]
+verify_jwt = false
