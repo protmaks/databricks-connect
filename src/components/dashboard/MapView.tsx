@@ -22,7 +22,7 @@ const INITIAL_VIEW_STATE = {
   bearing: 0,
   minZoom: 3,
   maxZoom: 14,
-};
+} as unknown as Record<string, never>;
 
 // CARTO dark — free, no token
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
