@@ -61,7 +61,7 @@ export function KpiHeader({ kpi, loading }: KpiHeaderProps) {
 
         <div className="grid flex-1 grid-cols-2 gap-3 md:grid-cols-4 max-w-3xl">
           {cards.map((c, i) => {
-            const value = kpi ? (kpi as Record<string, number>)[c.key] : 0;
+            const value = kpi ? (kpi[c.key] as number) : 0;
             const formatted = c.fmt ? c.fmt(value) : formatNumber(value);
             const Icon = c.icon;
             return (
