@@ -53,7 +53,9 @@ export async function runSql(statement: string, params: SqlParam[] = [], rowLimi
     }));
   }
 
-  const submit = await fetch(`${GATEWAY_URL}/2.0/sql/statements`, {
+  const submitUrl = `${GATEWAY_URL}/2.0/sql/statements`;
+  console.log("[databricks] POST", submitUrl);
+  const submit = await fetch(submitUrl, {
     method: "POST",
     headers: h,
     body: JSON.stringify(body),
