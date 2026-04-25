@@ -18,16 +18,18 @@ interface Body {
   state?: string;
 }
 
-// Aggregate by state (cheap, useful KPIs) AND return per-facility lat/lon
-// for client-side H3 binning. We keep the row count modest (~10k) and let
-// deck.gl build hex layer in the browser.
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const body: Body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const minTrust = Math.max(0, Math.min(1, Number(body.minTrust ?? 0)));
 
-    const where: string[] = ["latitude IS NOT NULL", "longitude IS NOT NULL"];
+    const where: string[] = [
+      "latitude IS NOT NULL",
+      "longitude IS NOT NULL",
+      "TRY_CAST(latitude AS DOUBLE) IS NOT NULL",
+      "TRY_CAST(longitude AS DOUBLE) IS NOT NULL",
+    ];
     const params: { name: string; value: string | number | null; type?: string }[] = [];
     if (body.facilityTypes && body.facilityTypes.length) {
       const list = body.facilityTypes
@@ -36,44 +38,44 @@ Deno.serve(async (req) => {
       where.push(`LOWER(facilitytypeid) IN (${list})`);
     }
     if (body.state) {
-      where.push("LOWER(state) = LOWER(:state)");
+      where.push("LOWER(address_stateorregion) = LOWER(:state)");
       params.push({ name: "state", value: body.state });
     }
     where.push(`(${TRUST_NUMERIC_SQL}) >= ${minTrust}`);
 
-    // KPI summary
     const kpiSql = `
       SELECT
         COUNT(*) AS total_facilities,
-        SUM(COALESCE(capacity, 0)) AS total_capacity,
+        SUM(COALESCE(TRY_CAST(capacity AS INT), 0)) AS total_capacity,
         AVG(${TRUST_NUMERIC_SQL}) AS avg_trust,
-        SUM(CASE WHEN (${TRUST_NUMERIC_SQL}) < 0.4 THEN 1 ELSE 0 END) AS anomalies,
-        COUNT(DISTINCT state) AS states_covered
+        SUM(CASE WHEN is_suspicious = 1 OR (${TRUST_NUMERIC_SQL}) < 0.4 THEN 1 ELSE 0 END) AS anomalies,
+        COUNT(DISTINCT address_stateorregion) AS states_covered
       FROM ${TABLE}
       WHERE ${where.join(" AND ")}
     `;
 
-    // State-level breakdown (for "medical desert" overlay & state list)
     const stateSql = `
       SELECT
-        state,
+        address_stateorregion AS state,
         COUNT(*) AS facility_count,
         AVG(${TRUST_NUMERIC_SQL}) AS avg_trust,
         AVG(CAST(latitude AS DOUBLE)) AS lat,
         AVG(CAST(longitude AS DOUBLE)) AS lon
       FROM ${TABLE}
       WHERE ${where.join(" AND ")}
-      GROUP BY state
+        AND address_stateorregion IS NOT NULL
+      GROUP BY address_stateorregion
       ORDER BY facility_count DESC
+      LIMIT 100
     `;
 
-    // Lightweight points payload for client-side hex binning
     const pointsSql = `
       SELECT
         CAST(latitude AS DOUBLE) AS lat,
         CAST(longitude AS DOUBLE) AS lon,
         ${TRUST_NUMERIC_SQL} AS trust,
-        COALESCE(capacity, 1) AS weight
+        COALESCE(TRY_CAST(capacity AS INT), 1) AS weight,
+        is_suspicious AS suspicious
       FROM ${TABLE}
       WHERE ${where.join(" AND ")}
       LIMIT 10000

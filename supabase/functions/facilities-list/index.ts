@@ -2,8 +2,7 @@ import { corsHeaders, errorResponse, jsonResponse, runSql } from "../_shared/dat
 
 const TABLE = "healthcare.silver.facility_intelligence";
 
-// Map textual trust_score -> numeric for downstream UI math.
-// CASE values discovered during data inspection: High / Unverified / Low (and possibly nulls).
+// trust_score is categorical text. Map to numeric for UI math.
 const TRUST_NUMERIC_SQL = `
   CASE LOWER(COALESCE(trust_score, 'unverified'))
     WHEN 'high' THEN 1.0
@@ -30,7 +29,12 @@ Deno.serve(async (req) => {
     const minTrust = Math.max(0, Math.min(1, Number(body.minTrust ?? 0)));
     const limit = Math.max(1, Math.min(5000, Number(body.limit ?? 2000)));
 
-    const where: string[] = ["latitude IS NOT NULL", "longitude IS NOT NULL"];
+    const where: string[] = [
+      "latitude IS NOT NULL",
+      "longitude IS NOT NULL",
+      "TRY_CAST(latitude AS DOUBLE) IS NOT NULL",
+      "TRY_CAST(longitude AS DOUBLE) IS NOT NULL",
+    ];
     const params: { name: string; value: string | number | null; type?: string }[] = [];
 
     if (body.facilityTypes && body.facilityTypes.length) {
@@ -40,32 +44,36 @@ Deno.serve(async (req) => {
       where.push(`LOWER(facilitytypeid) IN (${list})`);
     }
     if (body.state) {
-      where.push("LOWER(state) = LOWER(:state)");
+      where.push("LOWER(address_stateorregion) = LOWER(:state)");
       params.push({ name: "state", value: body.state });
     }
     if (body.search) {
-      where.push("(LOWER(name) LIKE LOWER(:search) OR LOWER(state) LIKE LOWER(:search))");
+      where.push("(LOWER(name) LIKE LOWER(:search) OR LOWER(specialties) LIKE LOWER(:search) OR LOWER(address_city) LIKE LOWER(:search))");
       params.push({ name: "search", value: `%${body.search}%` });
     }
     if (body.onlyAnomalies) {
-      where.push(`(${TRUST_NUMERIC_SQL}) < 0.4`);
+      where.push(`(is_suspicious = 1 OR (${TRUST_NUMERIC_SQL}) < 0.4)`);
     }
 
     const sql = `
       SELECT
-        id,
+        name AS id,
         name,
         CAST(latitude AS DOUBLE) AS lat,
         CAST(longitude AS DOUBLE) AS lon,
         facilitytypeid AS facility_type,
-        state,
-        district,
+        address_stateorregion AS state,
+        address_city AS district,
         trust_score AS trust_label,
         ${TRUST_NUMERIC_SQL} AS trust_score,
-        capacity,
-        last_updated,
-        reasoning,
-        trace_url
+        TRY_CAST(capacity AS INT) AS capacity,
+        TRY_CAST(numberdoctors AS INT) AS doctors,
+        specialties,
+        is_suspicious,
+        has_icu, has_trauma, has_surgery, has_cardiology, has_oncology, has_dialysis, has_nicu,
+        reason AS reasoning,
+        missing_evidence,
+        supporting_evidence
       FROM ${TABLE}
       WHERE ${where.join(" AND ")}
         AND (${TRUST_NUMERIC_SQL}) >= ${minTrust}
