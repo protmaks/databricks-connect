@@ -70,10 +70,10 @@ export function AgentDetailPanel({ facility, onClose }: AgentPanelProps) {
       {facility && (
         <motion.aside
           key={facility.id}
-          initial={{ x: 380, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: 380, opacity: 0 }}
-          transition={{ type: "spring", damping: 24, stiffness: 220 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
           className="z-30 flex h-full w-full min-w-0 flex-col border-l border-border bg-panel shadow-2xl"
           onAnimationComplete={() => setReport(null)}
         >
