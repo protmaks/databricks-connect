@@ -77,7 +77,10 @@ export function AgentDetailPanel({ facility, onClose, offsetRight = 0, compact =
           exit={{ x: 380, opacity: 0 }}
           transition={{ type: "spring", damping: 24, stiffness: 220 }}
           style={{ right: offsetRight }}
-          className="absolute top-0 z-30 flex h-full w-[360px] max-w-[calc(100vw-20rem)] flex-col border-l border-border bg-panel shadow-2xl"
+          className={cn(
+            "absolute top-0 z-30 flex h-full flex-col border-l border-border bg-panel shadow-2xl",
+            compact ? "w-1/2" : "w-[360px] max-w-full",
+          )}
           onAnimationComplete={() => setReport(null)}
         >
           {(() => {
