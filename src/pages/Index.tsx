@@ -90,50 +90,43 @@ const Index = () => {
           states={aggregate.states}
           onAgentPlan={handleAgentPlan}
         />
-        <main className="relative min-w-0 flex-1">
-          <MapView
-            points={aggregate.points}
-            facilities={filtered}
-            onFacilityClick={setSelected}
-            anomalyMode={filters.onlyAnomalies}
-            highlightIds={highlightIds}
-          />
-          {(agentPlan || selected) && (
-            <div
-              className={cn(
-                "absolute inset-y-0 right-0 z-20 grid h-full w-full",
-                agentPlan && selected ? "grid-cols-2" : "grid-cols-1",
-              )}
-            >
-              {agentPlan && (
-                <div className="h-full min-w-0 overflow-hidden">
-                  <AiMatchesPanel
-                    plan={agentPlan}
-                    results={agentMatches}
-                    query={agentQuery}
-                    onClose={() => setAgentPlan(null)}
-                    onSelect={handleSelectFromMatches}
-                  />
-                </div>
-              )}
-              {selected && (
-                <div className="h-full min-w-0 overflow-hidden">
-                  <AgentDetailPanel
-                    facility={selected}
-                    onClose={() => setSelected(null)}
-                  />
-                </div>
-              )}
+        <main className="relative flex min-w-0 flex-1">
+          <div className="relative min-w-0 flex-1">
+            <MapView
+              points={aggregate.points}
+              facilities={filtered}
+              onFacilityClick={setSelected}
+              anomalyMode={filters.onlyAnomalies}
+              highlightIds={highlightIds}
+            />
+            {snapshotQ.isLoading && (
+              <div className="pointer-events-none absolute right-4 top-4 rounded-md border border-border bg-card/80 px-3 py-1.5 font-mono text-[11px] text-muted-foreground backdrop-blur">
+                Loading 10K facilities…
+              </div>
+            )}
+            {snapshotQ.isFetching && !snapshotQ.isLoading && (
+              <div className="pointer-events-none absolute right-4 top-4 rounded-md border border-border bg-card/40 px-3 py-1 font-mono text-[10px] text-muted-foreground/70 backdrop-blur">
+                Refreshing…
+              </div>
+            )}
+          </div>
+          {agentPlan && (
+            <div className="h-full w-[360px] max-w-[45%] shrink-0">
+              <AiMatchesPanel
+                plan={agentPlan}
+                results={agentMatches}
+                query={agentQuery}
+                onClose={() => setAgentPlan(null)}
+                onSelect={handleSelectFromMatches}
+              />
             </div>
           )}
-          {snapshotQ.isLoading && (
-            <div className="pointer-events-none absolute right-4 top-4 rounded-md border border-border bg-card/80 px-3 py-1.5 font-mono text-[11px] text-muted-foreground backdrop-blur">
-              Loading 10K facilities…
-            </div>
-          )}
-          {snapshotQ.isFetching && !snapshotQ.isLoading && (
-            <div className="pointer-events-none absolute right-4 top-4 rounded-md border border-border bg-card/40 px-3 py-1 font-mono text-[10px] text-muted-foreground/70 backdrop-blur">
-              Refreshing…
+          {selected && (
+            <div className="h-full w-[360px] max-w-[45%] shrink-0">
+              <AgentDetailPanel
+                facility={selected}
+                onClose={() => setSelected(null)}
+              />
             </div>
           )}
         </main>
