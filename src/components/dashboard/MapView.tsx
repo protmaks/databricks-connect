@@ -122,14 +122,14 @@ export function MapView({ points, facilities, onFacilityClick, anomalyMode }: Ma
       <div className="pointer-events-none absolute bottom-4 left-4 rounded-md border border-border bg-card/80 px-3 py-2 backdrop-blur">
         <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
           {anomalyMode
-            ? showHex ? "Anomaly Density · 3D Hex" : "Anomalies · Facilities"
+            ? `Anomalies · ${facilities.length} facilities`
             : showHex ? "Trust Score · 3D Hex" : "Trust Score · Facilities"}
         </div>
         <div className="mt-1 flex items-center gap-2">
-          {anomalyMode && showHex ? (
+          {anomalyMode ? (
             <>
-              <div className="h-1.5 w-32 rounded-full" style={{ background: "linear-gradient(90deg, hsl(0 90% 92%), hsl(0 75% 35%))" }} />
-              <span className="font-mono text-[10px] text-muted-foreground">few → many</span>
+              <div className="h-2 w-2 rounded-full" style={{ background: "rgb(220, 38, 38)" }} />
+              <span className="font-mono text-[10px] text-muted-foreground">each dot = 1 anomaly</span>
             </>
           ) : (
             <>
@@ -139,7 +139,7 @@ export function MapView({ points, facilities, onFacilityClick, anomalyMode }: Ma
           )}
         </div>
         <div className="mt-1 font-mono text-[9px] text-muted-foreground/70">
-          zoom {zoom.toFixed(1)} · {showHex ? "aggregated" : "individual points"}
+          zoom {zoom.toFixed(1)} · {anomalyMode ? "individual anomalies" : showHex ? "aggregated" : "individual points"}
         </div>
       </div>
     </div>
