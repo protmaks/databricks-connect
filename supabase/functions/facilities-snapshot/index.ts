@@ -53,7 +53,8 @@ Deno.serve(async (req) => {
         tavily_check_status,
         tavily_evidence_urls,
         tavily_evidence_snippets,
-        CAST(last_tavily_check_date AS STRING) AS last_tavily_check_date
+        CAST(last_tavily_check_date AS STRING) AS last_tavily_check_date,
+        COALESCE(is_validated_safe, 0) AS is_validated_safe
       FROM ${TABLE}
       LIMIT 20000
     `;

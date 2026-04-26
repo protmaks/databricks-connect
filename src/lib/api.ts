@@ -77,6 +77,7 @@ function normalizeFacility(raw: Record<string, unknown>): Facility {
     tavily_evidence_urls: toStrArr(raw.tavily_evidence_urls),
     tavily_evidence_snippets: toStrArr(raw.tavily_evidence_snippets),
     last_tavily_check_date: (raw.last_tavily_check_date as string) ?? null,
+    is_validated_safe: toNum(raw.is_validated_safe),
   };
 }
 

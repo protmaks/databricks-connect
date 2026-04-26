@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
         COUNT(*) AS total_facilities,
         SUM(COALESCE(TRY_CAST(capacity AS INT), 0)) AS total_capacity,
         AVG(${EFFECTIVE_TRUST_SQL}) AS avg_trust,
-        SUM(CASE WHEN is_suspicious = 1 OR (${EFFECTIVE_TRUST_SQL}) < 0.4 THEN 1 ELSE 0 END) AS anomalies,
+        SUM(CASE WHEN (is_suspicious = 1 OR (${EFFECTIVE_TRUST_SQL}) < 0.4) AND COALESCE(is_validated_safe, 0) = 0 THEN 1 ELSE 0 END) AS anomalies,
         COUNT(DISTINCT address_stateorregion) AS states_covered,
         SUM(CASE WHEN tavily_verified = true THEN 1 ELSE 0 END) AS verified_count,
         SUM(CASE WHEN tavily_check_status IS NOT NULL THEN 1 ELSE 0 END) AS checked_count
