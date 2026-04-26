@@ -11,6 +11,7 @@ interface MapViewProps {
   points: PointAggregate[];
   facilities: Facility[];
   onFacilityClick: (f: Facility) => void;
+  anomalyMode: boolean;
 }
 
 // Above this zoom we hide the aggregated 3D hex layer and show individual points.
@@ -29,14 +30,15 @@ const INITIAL_VIEW_STATE = {
 // CARTO dark — free, no token
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
-export function MapView({ points, facilities, onFacilityClick }: MapViewProps) {
+export function MapView({ points, facilities, onFacilityClick, anomalyMode }: MapViewProps) {
   const [zoom, setZoom] = useState<number>(INITIAL_VIEW_STATE.zoom as unknown as number);
   const showHex = zoom < HEX_HIDE_ZOOM;
   // Scale point radius up as we zoom in for better visibility.
   const pointRadius = Math.max(3, Math.min(9, 3 + (zoom - 4) * 0.9));
 
   const layers = useMemo(() => {
-    const colorRange: [number, number, number][] = [
+    // Trust gradient (red → green) for normal mode
+    const trustColorRange: [number, number, number][] = [
       [239, 68, 68],
       [245, 158, 11],
       [250, 204, 21],
@@ -44,21 +46,30 @@ export function MapView({ points, facilities, onFacilityClick }: MapViewProps) {
       [52, 211, 153],
       [16, 185, 129],
     ];
+    // Density gradient (light → deep red) for anomaly mode — more anomalies = deeper red
+    const anomalyColorRange: [number, number, number][] = [
+      [254, 226, 226],
+      [252, 165, 165],
+      [248, 113, 113],
+      [239, 68, 68],
+      [220, 38, 38],
+      [153, 27, 27],
+    ];
 
     const hex = showHex
       ? new HexagonLayer({
           id: "facility-hex",
           data: points,
           getPosition: (d: PointAggregate) => [d.lon, d.lat],
-          getElevationWeight: (d: PointAggregate) => d.weight,
-          getColorWeight: (d: PointAggregate) => d.trust,
-          colorAggregation: "MEAN",
+          getElevationWeight: (d: PointAggregate) => (anomalyMode ? 1 : d.weight),
+          getColorWeight: (d: PointAggregate) => (anomalyMode ? 1 : d.trust),
+          colorAggregation: anomalyMode ? "SUM" : "MEAN",
           elevationAggregation: "SUM",
           radius: 18000,
-          elevationScale: 220,
+          elevationScale: anomalyMode ? 600 : 220,
           extruded: true,
           coverage: 0.85,
-          colorRange,
+          colorRange: anomalyMode ? anomalyColorRange : trustColorRange,
           pickable: false,
           opacity: 0.85,
           material: { ambient: 0.6, diffuse: 0.8, shininess: 32 },
@@ -86,7 +97,7 @@ export function MapView({ points, facilities, onFacilityClick }: MapViewProps) {
     });
 
     return [hex, scatter].filter(Boolean) as NonNullable<typeof scatter>[];
-  }, [points, facilities, onFacilityClick, showHex, pointRadius]);
+  }, [points, facilities, onFacilityClick, showHex, pointRadius, anomalyMode]);
 
   return (
     <div className="relative h-full w-full">
