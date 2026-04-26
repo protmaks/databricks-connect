@@ -105,6 +105,24 @@ export function KpiHeader({ kpi, loading, refreshing, onRefresh, lastUpdated }: 
             );
           })}
         </div>
+
+        <div className="flex flex-col items-end gap-1">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onRefresh}
+            disabled={refreshing || !onRefresh}
+            className="h-8 gap-1.5"
+          >
+            <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />
+            <span className="text-xs">Refresh</span>
+          </Button>
+          {lastUpdated ? (
+            <span className="font-mono text-[10px] text-muted-foreground">
+              {formatAgo(lastUpdated)}
+            </span>
+          ) : null}
+        </div>
       </div>
     </header>
   );
