@@ -272,18 +272,28 @@ export function AgentDetailPanel({ facility, onClose, offsetRight = 0 }: AgentPa
                     )}
 
                     <div className="space-y-2 border-t border-border pt-4">
-                      <Button onClick={runDeep} disabled={loading} className="w-full" variant="default">
-                        {loading ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Sparkles className="mr-2 h-4 w-4" />
-                        )}
-                        Deep Research
-                      </Button>
-                      <Button variant="outline" className="w-full" disabled>
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        View MLflow Trace
-                      </Button>
+                      <div>
+                        <Button onClick={runDeep} disabled={loading} className="w-full" variant="default">
+                          {loading ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="mr-2 h-4 w-4" />
+                          )}
+                          Run Deep Research
+                        </Button>
+                        <p className="mt-1.5 text-[10px] leading-snug text-muted-foreground">
+                          Launches an LLM agent that pulls live web evidence (Tavily) and generates a fresh trust brief for this facility.
+                        </p>
+                      </div>
+                      <div>
+                        <Button variant="outline" className="w-full" disabled>
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          View MLflow Trace
+                        </Button>
+                        <p className="mt-1.5 text-[10px] leading-snug text-muted-foreground">
+                          Opens the MLflow run that produced this facility's trust score (coming soon).
+                        </p>
+                      </div>
                     </div>
 
                     {report && (
