@@ -14,10 +14,9 @@ interface AiMatchesPanelProps {
   query: string;
   onClose: () => void;
   onSelect: (f: Facility) => void;
-  compact?: boolean;
 }
 
-export function AiMatchesPanel({ plan, results, query, onClose, onSelect, compact = false }: AiMatchesPanelProps) {
+export function AiMatchesPanel({ plan, results, query, onClose, onSelect }: AiMatchesPanelProps) {
   return (
     <AnimatePresence>
       {plan && (
@@ -26,10 +25,7 @@ export function AiMatchesPanel({ plan, results, query, onClose, onSelect, compac
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 340, opacity: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 30 }}
-          className={cn(
-            "absolute right-0 top-0 z-20 flex h-full flex-col border-l border-border bg-panel/95 backdrop-blur",
-            compact ? "w-1/2" : "w-[340px] max-w-full",
-          )}
+          className="z-20 flex h-full w-full min-w-0 flex-col border-l border-border bg-panel/95 backdrop-blur"
         >
           <header className="flex items-start justify-between gap-2 border-b border-border p-4">
             <div className="min-w-0 flex-1">
