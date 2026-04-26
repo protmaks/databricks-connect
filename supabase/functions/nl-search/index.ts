@@ -65,6 +65,7 @@ Deno.serve(async (req) => {
       state: typeof parsed.state === "string" ? parsed.state : null,
       search: typeof parsed.search === "string" ? parsed.search : null,
       onlyAnomalies: Boolean(parsed.onlyAnomalies),
+      onlyVerified: Boolean(parsed.onlyVerified),
     };
 
     return jsonResponse({ filters, raw: parsed });

@@ -176,6 +176,13 @@ export async function deepResearch(facility: Facility): Promise<string> {
       reasoning: facility.reasoning,
       specialties: facility.specialties,
       missing_evidence: facility.missing_evidence,
+      supporting_evidence: facility.supporting_evidence,
+      tavily_verified: facility.tavily_verified,
+      tavily_check_status: facility.tavily_check_status,
+      tavily_evidence_urls: facility.tavily_evidence_urls,
+      tavily_evidence_snippets: facility.tavily_evidence_snippets,
+      last_tavily_check_date: facility.last_tavily_check_date,
+      websites: facility.websites,
     },
   });
   if (error) throw error;
