@@ -167,12 +167,32 @@ export async function runSql(
 
   const schema = current.manifest?.schema?.columns ?? [];
   const columns: string[] = schema.map((c: { name: string }) => c.name);
-  const dataArr: unknown[][] = current.result?.data_array ?? [];
-  const rows = dataArr.map((row) => {
+
+  // Collect first chunk + follow next_chunk_internal_link until exhausted.
+  const allData: unknown[][] = [...(current.result?.data_array ?? [])];
+  let nextLink: string | undefined = current.result?.next_chunk_internal_link;
+  let chunkSafety = 50;
+  while (nextLink && chunkSafety-- > 0) {
+    // next_chunk_internal_link is a path like /api/2.0/sql/statements/{id}/result/chunks/{n}
+    const url = nextLink.startsWith("http")
+      ? nextLink
+      : `${GATEWAY_URL}${nextLink.replace(/^\/api/, "")}`;
+    const chunkRes = await fetch(url, { headers: h });
+    if (!chunkRes.ok) {
+      const data = await safeJson(chunkRes).catch((e) => ({ _err: (e as Error).message }));
+      throw new Error(`Databricks chunk failed [${chunkRes.status}]: ${JSON.stringify(data)}`);
+    }
+    const chunk = await safeJson(chunkRes) as any;
+    if (Array.isArray(chunk?.data_array)) allData.push(...chunk.data_array);
+    nextLink = chunk?.next_chunk_internal_link;
+  }
+
+  const rows = allData.map((row) => {
     const obj: Record<string, unknown> = {};
     columns.forEach((col, i) => (obj[col] = row[i]));
     return obj;
   });
+  console.log(`[databricks] fetched ${rows.length} rows`);
   const result: SqlResult = { columns, rows };
   if (useCache) {
     cacheSet(key, result);
