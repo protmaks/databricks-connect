@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ExternalLink, Loader2, Sparkles, X } from "lucide-react";
+import { ExternalLink, Loader2, ShieldCheck, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -105,6 +105,13 @@ export function AgentDetailPanel({ facility, onClose }: AgentPanelProps) {
                         <div>
                           <span className="text-muted-foreground">Label: </span>
                           <span className="font-mono">{facility.trust_label}</span>
+                          {facility.tavily_updated_trust_score &&
+                            facility.original_trust_label &&
+                            facility.tavily_updated_trust_score !== facility.original_trust_label && (
+                              <span className="ml-1 text-muted-foreground/70">
+                                (was {facility.original_trust_label})
+                              </span>
+                            )}
                         </div>
                         <div>
                           <span className="text-muted-foreground">Capacity: </span>
@@ -114,13 +121,51 @@ export function AgentDetailPanel({ facility, onClose }: AgentPanelProps) {
                           <span className="text-muted-foreground">Doctors: </span>
                           <span className="font-mono">{facility.doctors ?? "—"}</span>
                         </div>
-                        {facility.is_suspicious === 1 && (
-                          <Badge variant="outline" className="border-trust-low/40 bg-trust-low/10 text-trust-low">
-                            Flagged suspicious
-                          </Badge>
-                        )}
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {facility.tavily_verified && (
+                            <Badge variant="outline" className="border-trust-high/40 bg-trust-high/10 text-trust-high">
+                              <ShieldCheck className="mr-1 h-3 w-3" />
+                              Tavily verified
+                            </Badge>
+                          )}
+                          {facility.is_suspicious === 1 && (
+                            <Badge variant="outline" className="border-trust-low/40 bg-trust-low/10 text-trust-low">
+                              Flagged suspicious
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
+
+                    {(facility.websites || facility.phone_numbers || facility.email) && (
+                      <section className="space-y-1 text-xs">
+                        {facility.websites && (
+                          <div className="truncate">
+                            <span className="text-muted-foreground">Web: </span>
+                            <a
+                              href={facility.websites.split(/[;, ]/)[0]}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              {facility.websites}
+                            </a>
+                          </div>
+                        )}
+                        {facility.phone_numbers && (
+                          <div className="truncate">
+                            <span className="text-muted-foreground">Phone: </span>
+                            <span className="font-mono">{facility.phone_numbers}</span>
+                          </div>
+                        )}
+                        {facility.email && (
+                          <div className="truncate">
+                            <span className="text-muted-foreground">Email: </span>
+                            <span className="font-mono">{facility.email}</span>
+                          </div>
+                        )}
+                      </section>
+                    )}
 
                     {caps.length > 0 && (
                       <section>
@@ -181,6 +226,43 @@ export function AgentDetailPanel({ facility, onClose }: AgentPanelProps) {
                             <li key={i} className="flex gap-2 rounded-md border border-trust-high/20 bg-trust-high/5 p-2">
                               <span className="text-trust-high">✓</span>
                               <span>{m}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+
+                    {facility.tavily_evidence_urls && facility.tavily_evidence_urls.length > 0 && (
+                      <section>
+                        <div className="mb-1.5 flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-trust-high">
+                          <ShieldCheck className="h-3 w-3" />
+                          Tavily Evidence
+                          {facility.last_tavily_check_date && (
+                            <span className="ml-auto font-mono text-[10px] text-muted-foreground">
+                              {facility.last_tavily_check_date}
+                            </span>
+                          )}
+                        </div>
+                        <ul className="space-y-1.5 text-xs">
+                          {facility.tavily_evidence_urls.slice(0, 5).map((url, i) => (
+                            <li
+                              key={i}
+                              className="rounded-md border border-trust-high/20 bg-trust-high/5 p-2"
+                            >
+                              <a
+                                href={url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex items-center gap-1 truncate text-trust-high hover:underline"
+                              >
+                                <ExternalLink className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{url}</span>
+                              </a>
+                              {facility.tavily_evidence_snippets?.[i] && (
+                                <p className="mt-1 text-[11px] leading-snug text-foreground/80">
+                                  {facility.tavily_evidence_snippets[i]}
+                                </p>
+                              )}
                             </li>
                           ))}
                         </ul>
