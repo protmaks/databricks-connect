@@ -142,9 +142,9 @@ export function KpiHeader({ kpi, loading, refreshing, onRefresh, lastUpdated }: 
               <span className="text-xs font-semibold">About / How it works</span>
             </Link>
           </Button>
-          <div className="flex w-full items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-2 md:w-full">
             {lastUpdated ? (
-              <span className="font-mono text-[10px] text-muted-foreground">
+              <span className="hidden font-mono text-[10px] text-muted-foreground sm:inline">
                 {formatAgo(lastUpdated)}
               </span>
             ) : null}
