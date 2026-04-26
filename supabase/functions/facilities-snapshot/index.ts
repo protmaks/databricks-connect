@@ -22,8 +22,8 @@ Deno.serve(async (req) => {
       SELECT
         name AS id,
         name,
-        CAST(latitude AS DOUBLE) AS lat,
-        CAST(longitude AS DOUBLE) AS lon,
+        TRY_CAST(latitude AS DOUBLE) AS lat,
+        TRY_CAST(longitude AS DOUBLE) AS lon,
         facilitytypeid AS facility_type,
         address_stateorregion AS state,
         address_city AS district,
@@ -53,14 +53,10 @@ Deno.serve(async (req) => {
         tavily_evidence_snippets,
         CAST(last_tavily_check_date AS STRING) AS last_tavily_check_date
       FROM ${TABLE}
-      WHERE latitude IS NOT NULL
-        AND longitude IS NOT NULL
-        AND TRY_CAST(latitude AS DOUBLE) IS NOT NULL
-        AND TRY_CAST(longitude AS DOUBLE) IS NOT NULL
-      LIMIT 15000
+      LIMIT 20000
     `;
 
-    const { rows } = await runSql(sql, [], 15000);
+    const { rows } = await runSql(sql, [], 20000);
     return jsonResponse(
       { count: rows.length, facilities: rows, generated_at: new Date().toISOString() },
       200,
