@@ -10,7 +10,6 @@ import { buildAggregate, filterFacilities } from "@/lib/filter";
 import { DEFAULT_FILTERS, type Facility, type FilterState } from "@/lib/types";
 import { runAgentSearch, type QueryPlan } from "@/lib/agentSearch";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 
 const Index = () => {
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
