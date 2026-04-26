@@ -17,7 +17,7 @@ interface AiMatchesPanelProps {
   compact?: boolean;
 }
 
-export function AiMatchesPanel({ plan, results, query, onClose, onSelect }: AiMatchesPanelProps) {
+export function AiMatchesPanel({ plan, results, query, onClose, onSelect, compact = false }: AiMatchesPanelProps) {
   return (
     <AnimatePresence>
       {plan && (
