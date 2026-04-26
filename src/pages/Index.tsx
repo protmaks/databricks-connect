@@ -19,6 +19,7 @@ const Index = () => {
   const [selected, setSelected] = useState<Facility | null>(null);
   const [agentPlan, setAgentPlan] = useState<QueryPlan | null>(null);
   const [agentQuery, setAgentQuery] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const snapshotQ = useQuery({
