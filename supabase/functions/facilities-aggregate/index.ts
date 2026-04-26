@@ -1,9 +1,10 @@
 import { corsHeaders, errorResponse, jsonResponse, runSql } from "../_shared/databricks.ts";
 
-const TABLE = "healthcare.silver.facility_intelligence";
+const TABLE = "healthcare.gold.facility_intelligence_verified";
 
-const TRUST_NUMERIC_SQL = `
-  CASE LOWER(COALESCE(trust_score, 'unverified'))
+// Prefer Tavily-updated trust score when available, fall back to original.
+const EFFECTIVE_TRUST_SQL = `
+  CASE LOWER(COALESCE(tavily_updated_trust_score, trust_score, 'unverified'))
     WHEN 'high' THEN 1.0
     WHEN 'medium' THEN 0.6
     WHEN 'unverified' THEN 0.5
@@ -16,6 +17,7 @@ interface Body {
   facilityTypes?: string[];
   minTrust?: number;
   state?: string;
+  onlyVerified?: boolean;
 }
 
 Deno.serve(async (req) => {
@@ -41,15 +43,20 @@ Deno.serve(async (req) => {
       where.push("LOWER(address_stateorregion) = LOWER(:state)");
       params.push({ name: "state", value: body.state });
     }
-    where.push(`(${TRUST_NUMERIC_SQL}) >= ${minTrust}`);
+    if (body.onlyVerified) {
+      where.push("tavily_verified = true");
+    }
+    where.push(`(${EFFECTIVE_TRUST_SQL}) >= ${minTrust}`);
 
     const kpiSql = `
       SELECT
         COUNT(*) AS total_facilities,
         SUM(COALESCE(TRY_CAST(capacity AS INT), 0)) AS total_capacity,
-        AVG(${TRUST_NUMERIC_SQL}) AS avg_trust,
-        SUM(CASE WHEN is_suspicious = 1 OR (${TRUST_NUMERIC_SQL}) < 0.4 THEN 1 ELSE 0 END) AS anomalies,
-        COUNT(DISTINCT address_stateorregion) AS states_covered
+        AVG(${EFFECTIVE_TRUST_SQL}) AS avg_trust,
+        SUM(CASE WHEN is_suspicious = 1 OR (${EFFECTIVE_TRUST_SQL}) < 0.4 THEN 1 ELSE 0 END) AS anomalies,
+        COUNT(DISTINCT address_stateorregion) AS states_covered,
+        SUM(CASE WHEN tavily_verified = true THEN 1 ELSE 0 END) AS verified_count,
+        SUM(CASE WHEN tavily_check_status IS NOT NULL THEN 1 ELSE 0 END) AS checked_count
       FROM ${TABLE}
       WHERE ${where.join(" AND ")}
     `;
@@ -58,7 +65,8 @@ Deno.serve(async (req) => {
       SELECT
         address_stateorregion AS state,
         COUNT(*) AS facility_count,
-        AVG(${TRUST_NUMERIC_SQL}) AS avg_trust,
+        AVG(${EFFECTIVE_TRUST_SQL}) AS avg_trust,
+        SUM(CASE WHEN tavily_verified = true THEN 1 ELSE 0 END) AS verified_count,
         AVG(CAST(latitude AS DOUBLE)) AS lat,
         AVG(CAST(longitude AS DOUBLE)) AS lon
       FROM ${TABLE}
@@ -73,9 +81,10 @@ Deno.serve(async (req) => {
       SELECT
         CAST(latitude AS DOUBLE) AS lat,
         CAST(longitude AS DOUBLE) AS lon,
-        ${TRUST_NUMERIC_SQL} AS trust,
+        ${EFFECTIVE_TRUST_SQL} AS trust,
         COALESCE(TRY_CAST(capacity AS INT), 1) AS weight,
-        is_suspicious AS suspicious
+        is_suspicious AS suspicious,
+        CASE WHEN tavily_verified = true THEN 1 ELSE 0 END AS verified
       FROM ${TABLE}
       WHERE ${where.join(" AND ")}
       LIMIT 10000

@@ -124,6 +124,13 @@ export function FiltersSidebar({ filters, onChange, states }: SidebarProps) {
 
           <section className="space-y-3">
             <div className="flex items-center justify-between">
+              <Label className="text-xs">Tavily-verified only</Label>
+              <Switch
+                checked={filters.onlyVerified}
+                onCheckedChange={(v) => onChange({ ...filters, onlyVerified: v })}
+              />
+            </div>
+            <div className="flex items-center justify-between">
               <Label className="text-xs">Only anomalies</Label>
               <Switch
                 checked={filters.onlyAnomalies}

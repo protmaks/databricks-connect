@@ -15,7 +15,8 @@ Return ONLY JSON matching this schema:
   "minTrust": number          // 0..1; use 0.7 for "verified", 0.4 for "trusted", 0 otherwise
   "state": string | null      // Indian state in lowercase if mentioned, else null
   "search": string | null     // free-text keyword for name match (e.g. "surgeon", "trauma"), else null
-  "onlyAnomalies": boolean    // true only if user explicitly asks for suspicious/unverified ones
+  "onlyAnomalies": boolean,   // true only if user explicitly asks for suspicious/unverified ones
+  "onlyVerified": boolean     // true only if user explicitly asks for Tavily-verified / externally verified facilities
 }`;
 
 Deno.serve(async (req) => {
@@ -65,6 +66,7 @@ Deno.serve(async (req) => {
       state: typeof parsed.state === "string" ? parsed.state : null,
       search: typeof parsed.search === "string" ? parsed.search : null,
       onlyAnomalies: Boolean(parsed.onlyAnomalies),
+      onlyVerified: Boolean(parsed.onlyVerified),
     };
 
     return jsonResponse({ filters, raw: parsed });
