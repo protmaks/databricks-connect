@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.facility-deep-research]
 verify_jwt = false
+
+[functions._debug-count]
+verify_jwt = false
