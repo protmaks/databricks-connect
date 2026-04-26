@@ -111,15 +111,15 @@ export function KpiHeader({ kpi, loading, refreshing, onRefresh, lastUpdated }: 
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className="rounded-md border border-border bg-card/60 px-3 py-2"
+                className="rounded-md border border-border bg-card/60 px-2 py-1.5 md:px-3 md:py-2"
               >
-                <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-muted-foreground">
-                  <span>{c.label}</span>
-                  <Icon className={cn("h-3.5 w-3.5", c.accent)} />
+                <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground md:text-[11px]">
+                  <span className="truncate">{c.label}</span>
+                  <Icon className={cn("h-3 w-3 shrink-0 md:h-3.5 md:w-3.5", c.accent)} />
                 </div>
                 <div
                   className={cn(
-                    "font-mono text-lg font-semibold tabular-nums",
+                    "font-mono text-base font-semibold tabular-nums md:text-lg",
                     c.accent,
                     loading && "animate-pulse-glow",
                   )}
@@ -131,11 +131,11 @@ export function KpiHeader({ kpi, loading, refreshing, onRefresh, lastUpdated }: 
           })}
         </div>
 
-        <div className="flex flex-col items-end gap-1.5">
+        <div className="flex flex-row items-center justify-end gap-2 md:flex-col md:items-end md:gap-1.5">
           <Button
             asChild
             size="sm"
-            className="h-8 w-full gap-1.5 bg-primary/15 text-primary hover:bg-primary/25 border border-primary/40 shadow-[0_0_12px_hsl(var(--primary)/0.35)]"
+            className="hidden h-8 w-full gap-1.5 bg-primary/15 text-primary hover:bg-primary/25 border border-primary/40 shadow-[0_0_12px_hsl(var(--primary)/0.35)] md:inline-flex"
           >
             <Link to="/about">
               <Info className="h-3.5 w-3.5" />
