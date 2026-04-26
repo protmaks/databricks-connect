@@ -92,7 +92,7 @@ const Index = () => {
       <div className="flex min-h-0 flex-1">
         <FiltersSidebar
           filters={filters}
-          onChange={setFilters}
+          onChange={handleFiltersChange}
           states={aggregate.states}
           onAgentPlan={handleAgentPlan}
         />
