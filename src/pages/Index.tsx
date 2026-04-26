@@ -100,7 +100,7 @@ const Index = () => {
           <AgentDetailPanel
             facility={selected}
             onClose={() => setSelected(null)}
-            offsetRight={agentPlan ? 380 : 0}
+            offsetRight={agentPlan ? 340 : 0}
           />
           <AiMatchesPanel
             plan={agentPlan}
