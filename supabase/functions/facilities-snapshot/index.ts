@@ -18,6 +18,8 @@ const EFFECTIVE_TRUST_SQL = `
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
+    const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+    const force = Boolean((body as { force?: boolean }).force);
     const sql = `
       SELECT
         name AS id,
