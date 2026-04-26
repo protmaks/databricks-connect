@@ -97,7 +97,11 @@ const Index = () => {
             anomalyMode={filters.onlyAnomalies}
             highlightIds={highlightIds}
           />
-          <AgentDetailPanel facility={selected} onClose={() => setSelected(null)} />
+          <AgentDetailPanel
+            facility={selected}
+            onClose={() => setSelected(null)}
+            offsetRight={agentPlan ? 380 : 0}
+          />
           <AiMatchesPanel
             plan={agentPlan}
             results={agentMatches}
