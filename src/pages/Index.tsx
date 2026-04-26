@@ -97,20 +97,31 @@ const Index = () => {
             anomalyMode={filters.onlyAnomalies}
             highlightIds={highlightIds}
           />
-          <AgentDetailPanel
-            facility={selected}
-            onClose={() => setSelected(null)}
-            offsetRight={agentPlan ? "50%" : 0}
-            compact={Boolean(agentPlan)}
-          />
-          <AiMatchesPanel
-            plan={agentPlan}
-            results={agentMatches}
-            query={agentQuery}
-            onClose={() => setAgentPlan(null)}
-            onSelect={handleSelectFromMatches}
-            compact={Boolean(selected)}
-          />
+          {(agentPlan || selected) && (
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-20 flex h-full w-full max-w-full sm:w-[min(820px,100%)] md:w-[min(900px,80%)]">
+              <div className="pointer-events-auto flex h-full w-full">
+                {agentPlan && (
+                  <div className={cn("h-full min-w-0", selected ? "w-1/2" : "w-full")}>
+                    <AiMatchesPanel
+                      plan={agentPlan}
+                      results={agentMatches}
+                      query={agentQuery}
+                      onClose={() => setAgentPlan(null)}
+                      onSelect={handleSelectFromMatches}
+                    />
+                  </div>
+                )}
+                {selected && (
+                  <div className={cn("h-full min-w-0", agentPlan ? "w-1/2" : "w-full")}>
+                    <AgentDetailPanel
+                      facility={selected}
+                      onClose={() => setSelected(null)}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           {snapshotQ.isLoading && (
             <div className="pointer-events-none absolute right-4 top-4 rounded-md border border-border bg-card/80 px-3 py-1.5 font-mono text-[11px] text-muted-foreground backdrop-blur">
               Loading 10K facilities…
