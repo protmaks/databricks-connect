@@ -1,80 +1,80 @@
-## Проблема
+## Problem
 
-Сейчас на каждое изменение фильтра летят 3 SQL-запроса в Databricks (`facilities-aggregate` делает kpi+states+points параллельно) + 1 на `facilities-list`. При 10k строк и любом тычке в чекбокс — это 4 round-trip'а в Databricks (~2–5 сек каждый).
+Right now every filter change fires 3 SQL queries to Databricks (`facilities-aggregate` runs kpi+states+points in parallel) plus 1 to `facilities-list`. With 10k rows, every checkbox toggle means 4 round-trips to Databricks (~2–5 seconds each).
 
-При этом данные в Gold-таблице меняются редко (Tavily-обогащение идёт батчами, не в realtime).
+Meanwhile, the data in the Gold table changes rarely (Tavily enrichment runs in batches, not in realtime).
 
-## Решение: 3 уровня кеша
+## Solution: 3 cache layers
 
-### Уровень 1 — Серверный кеш в Edge Functions (главное)
+### Layer 1 — Server-side cache in Edge Functions (the main one)
 
-В `_shared/databricks.ts` добавить in-memory LRU-кеш для `runSql()`:
-- ключ = хеш `statement + params`
-- TTL = **5 минут** (настраивается через env `CACHE_TTL_SECONDS`)
-- макс. 100 записей в памяти инстанса
+Add an in-memory LRU cache for `runSql()` in `_shared/databricks.ts`:
+- key = hash of `statement + params`
+- TTL = **5 minutes** (configurable via env `CACHE_TTL_SECONDS`)
+- max 100 entries per instance
 
-Edge Function instance в Supabase живёт несколько минут между cold-start'ами, так что повторные запросы с одинаковыми фильтрами от любого клиента вернутся за ~50 мс вместо 2–5 сек.
+Supabase Edge Function instances live for several minutes between cold starts, so repeated requests with the same filters from any client come back in ~50 ms instead of 2–5 s.
 
-Также добавить заголовок `Cache-Control: public, max-age=60, stale-while-revalidate=300` — браузер/CDN ещё раз кешируют ответ.
+Also add a `Cache-Control: public, max-age=60, stale-while-revalidate=300` header — the browser/CDN cache the response on top.
 
-### Уровень 2 — Загрузить ВСЁ один раз, фильтровать на клиенте
+### Layer 2 — Load everything once, filter on the client
 
-10k строк — это ~3–5 МБ JSON. Это нормально для одной загрузки.
+10k rows is ~3–5 MB of JSON. That's fine for a single load.
 
-Стратегия:
-1. Новая Edge Function `facilities-snapshot` — отдаёт **все** ~10k фасилити одним запросом без фильтров (с серверным кешем на 5 мин).
-2. На клиенте кладём это в React Query с `staleTime: 5 * 60_000` и `gcTime: 30 * 60_000`.
-3. Все фильтры (`facilityTypes`, `minTrust`, `state`, `search`, `onlyAnomalies`, `onlyVerified`) применяются **в браузере** через `useMemo` — мгновенно, без сетевых запросов.
-4. KPI и агрегаты по штатам тоже считаются на клиенте из этого же массива.
+Strategy:
+1. New Edge Function `facilities-snapshot` — returns **all** ~10k facilities in one query without filters (with the 5-minute server cache).
+2. On the client, drop it into React Query with `staleTime: 5 * 60_000` and `gcTime: 30 * 60_000`.
+3. All filters (`facilityTypes`, `minTrust`, `state`, `search`, `onlyAnomalies`, `onlyVerified`) are applied **in the browser** via `useMemo` — instant, no network calls.
+4. KPIs and per-state aggregates are computed on the client from the same array.
 
-Плюсы: фильтры реагируют моментально, Databricks дёргается ~раз в 5 минут на пользователя.
+Pros: filters react instantly, Databricks is hit ~once every 5 minutes per user.
 
-Минусы: первая загрузка чуть дольше (~1.5–3 сек на 10k). Это компенсируется skeleton'ом и тем, что дальше всё летает.
+Cons: the first load is a bit longer (~1.5–3 s for 10k). This is masked by a skeleton, and everything flies after that.
 
-### Уровень 3 — React Query настройки в `App.tsx`
+### Layer 3 — React Query settings in `App.tsx`
 
-Сейчас `QueryClient` без конфигурации. Добавить:
+Right now `QueryClient` has no configuration. Add:
 ```ts
 new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60_000,      // 5 минут считаем данные свежими
-      gcTime: 30 * 60_000,         // храним в памяти 30 минут
-      refetchOnWindowFocus: false, // не дёргать при возврате на вкладку
+      staleTime: 5 * 60_000,      // data is considered fresh for 5 minutes
+      gcTime: 30 * 60_000,         // keep in memory for 30 minutes
+      refetchOnWindowFocus: false, // don't refetch when tab regains focus
       retry: 1,
     },
   },
 });
 ```
 
-Плюс persistence через `localStorage` (`@tanstack/query-sync-storage-persister` + `persistQueryClient`) — при перезагрузке страницы данные сразу из localStorage, фоновый refetch через 5 мин.
+Plus persistence via `localStorage` (`@tanstack/query-sync-storage-persister` + `persistQueryClient`) — on page reload data comes straight from localStorage, with a background refetch after 5 minutes.
 
-## Что меняется в файлах
+## Files that change
 
 **Backend:**
-- `supabase/functions/_shared/databricks.ts` — добавить `cachedRunSql()` с Map-based LRU + TTL.
-- `supabase/functions/facilities-snapshot/index.ts` — **новая** функция: один SELECT всех колонок без WHERE по фильтрам, только базовые (lat/lon NOT NULL). Лимит 15000.
-- `supabase/functions/facilities-aggregate/index.ts` и `facilities-list/index.ts` — оставляем как fallback, но переключаем на `cachedRunSql` (для совместимости + если кому-то понадобится server-side фильтрация).
+- `supabase/functions/_shared/databricks.ts` — add `cachedRunSql()` with a Map-based LRU + TTL.
+- `supabase/functions/facilities-snapshot/index.ts` — **new** function: a single SELECT of all columns with no filter WHERE clause, only the basics (lat/lon NOT NULL). Limit 15000.
+- `supabase/functions/facilities-aggregate/index.ts` and `facilities-list/index.ts` — kept as a fallback, but switched to `cachedRunSql` (for compatibility and in case anyone needs server-side filtering).
 
 **Frontend:**
-- `src/lib/api.ts` — новая функция `fetchSnapshot()`, плюс клиентские хелперы `filterFacilities()`, `aggregateKpi()`, `aggregateStates()`, `aggregatePoints()`.
-- `src/pages/Index.tsx` — один `useQuery(['snapshot'])`, всё остальное через `useMemo(filters → отфильтрованные данные)`.
-- `src/App.tsx` — настройки `QueryClient` + опциональный `persistQueryClient` в localStorage.
-- `package.json` — добавить `@tanstack/query-sync-storage-persister` и `@tanstack/react-query-persist-client` (~3 КБ).
+- `src/lib/api.ts` — new `fetchSnapshot()` function, plus client-side helpers `filterFacilities()`, `aggregateKpi()`, `aggregateStates()`, `aggregatePoints()`.
+- `src/pages/Index.tsx` — a single `useQuery(['snapshot'])`, everything else through `useMemo(filters → filtered data)`.
+- `src/App.tsx` — `QueryClient` settings plus optional `persistQueryClient` in localStorage.
+- `package.json` — add `@tanstack/query-sync-storage-persister` and `@tanstack/react-query-persist-client` (~3 KB).
 
-**NL-search и deep-research** трогать не нужно — они и так редкие и контекстные.
+**NL-search and deep-research** don't need to be touched — they're already rare and contextual.
 
-## Результат
+## Result
 
-| Действие | Сейчас | После |
+| Action | Before | After |
 |---|---|---|
-| Первая загрузка | 4–8 сек (4 запроса) | 2–4 сек (1 запрос) |
-| Смена фильтра | 4–8 сек | <50 мс (мемоизация) |
-| Возврат на страницу | 4–8 сек | мгновенно (localStorage) |
-| Нагрузка на Databricks | каждый клик | ~1 запрос / 5 мин / пользователя |
+| First load | 4–8 s (4 requests) | 2–4 s (1 request) |
+| Filter change | 4–8 s | <50 ms (memoized) |
+| Returning to the page | 4–8 s | instant (localStorage) |
+| Load on Databricks | every click | ~1 request / 5 min / user |
 
-## Опции, которые стоит обсудить
+## Options worth discussing
 
-1. **TTL серверного кеша** — 5 мин ок, или хочешь больше/меньше? Если данные обновляются раз в час — поставлю 30 мин.
-2. **Persist в localStorage** — включить или не надо? (плюс: моментальный старт; минус: ~3 МБ в localStorage пользователя).
-3. **Если в будущем таблица вырастет до 100k+** — снапшот уже не сработает, тогда вернёмся к серверной фильтрации, но кеш всё равно поможет. Сейчас на 10k — оптимальный путь.
+1. **Server cache TTL** — 5 min is fine, or do you want more/less? If the data refreshes hourly, I'll set it to 30 min.
+2. **Persist in localStorage** — turn it on or not? (pro: instant startup; con: ~3 MB in the user's localStorage).
+3. **If the table grows to 100k+ in the future** — the snapshot won't work anymore, then we'll go back to server-side filtering, but the cache will still help. For 10k right now, this is the optimal path.
