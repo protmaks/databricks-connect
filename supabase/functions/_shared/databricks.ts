@@ -32,7 +32,55 @@ function headers(lovable: string, dbx: string) {
   };
 }
 
-export async function runSql(statement: string, params: SqlParam[] = [], rowLimit = 5000): Promise<SqlResult> {
+// In-memory LRU + TTL cache shared across requests served by the same edge instance.
+// Edge instances live for several minutes between cold-starts, so this absorbs
+// most repeated SQL traffic without any external infra.
+const CACHE_TTL_MS = Number(Deno.env.get("CACHE_TTL_SECONDS") ?? "300") * 1000;
+const CACHE_MAX = 100;
+type CacheEntry = { value: SqlResult; expires: number };
+const sqlCache = new Map<string, CacheEntry>();
+
+function cacheKey(statement: string, params: SqlParam[]): string {
+  return JSON.stringify({ s: statement, p: params });
+}
+
+function cacheGet(key: string): SqlResult | null {
+  const hit = sqlCache.get(key);
+  if (!hit) return null;
+  if (hit.expires < Date.now()) {
+    sqlCache.delete(key);
+    return null;
+  }
+  // refresh LRU position
+  sqlCache.delete(key);
+  sqlCache.set(key, hit);
+  return hit.value;
+}
+
+function cacheSet(key: string, value: SqlResult): void {
+  if (sqlCache.size >= CACHE_MAX) {
+    const oldest = sqlCache.keys().next().value;
+    if (oldest) sqlCache.delete(oldest);
+  }
+  sqlCache.set(key, { value, expires: Date.now() + CACHE_TTL_MS });
+}
+
+export async function runSql(
+  statement: string,
+  params: SqlParam[] = [],
+  rowLimit = 5000,
+  options: { cache?: boolean } = {},
+): Promise<SqlResult> {
+  const useCache = options.cache !== false;
+  const key = cacheKey(statement, params);
+  if (useCache) {
+    const cached = cacheGet(key);
+    if (cached) {
+      console.log("[databricks] cache HIT", statement.slice(0, 60).replace(/\s+/g, " "));
+      return cached;
+    }
+  }
+
   const { lovable, dbx, warehouse } = getEnv();
   const h = headers(lovable, dbx);
 
@@ -89,7 +137,12 @@ export async function runSql(statement: string, params: SqlParam[] = [], rowLimi
     columns.forEach((col, i) => (obj[col] = row[i]));
     return obj;
   });
-  return { columns, rows };
+  const result: SqlResult = { columns, rows };
+  if (useCache) {
+    cacheSet(key, result);
+    console.log("[databricks] cache MISS, cached", statement.slice(0, 60).replace(/\s+/g, " "));
+  }
+  return result;
 }
 
 export const corsHeaders = {
@@ -98,10 +151,10 @@ export const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
 
-export function jsonResponse(data: unknown, status = 200): Response {
+export function jsonResponse(data: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json", ...extraHeaders },
   });
 }
 
