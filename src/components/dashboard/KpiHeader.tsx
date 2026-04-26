@@ -118,18 +118,23 @@ export function KpiHeader({ kpi, loading, refreshing, onRefresh, lastUpdated }: 
           })}
         </div>
 
-        <div className="flex flex-col items-end gap-1">
-          <div className="flex items-center gap-2">
-            <Button
-              asChild
-              size="sm"
-              className="h-8 gap-1.5 bg-primary/15 text-primary hover:bg-primary/25 border border-primary/40 shadow-[0_0_12px_hsl(var(--primary)/0.35)]"
-            >
-              <Link to="/about">
-                <Info className="h-3.5 w-3.5" />
-                <span className="text-xs font-semibold">About / How it works</span>
-              </Link>
-            </Button>
+        <div className="flex flex-col items-end gap-1.5">
+          <Button
+            asChild
+            size="sm"
+            className="h-8 w-full gap-1.5 bg-primary/15 text-primary hover:bg-primary/25 border border-primary/40 shadow-[0_0_12px_hsl(var(--primary)/0.35)]"
+          >
+            <Link to="/about">
+              <Info className="h-3.5 w-3.5" />
+              <span className="text-xs font-semibold">About / How it works</span>
+            </Link>
+          </Button>
+          <div className="flex w-full items-center justify-end gap-2">
+            {lastUpdated ? (
+              <span className="font-mono text-[10px] text-muted-foreground">
+                {formatAgo(lastUpdated)}
+              </span>
+            ) : null}
             <Button
               size="sm"
               variant="outline"
@@ -141,11 +146,6 @@ export function KpiHeader({ kpi, loading, refreshing, onRefresh, lastUpdated }: 
               <span className="text-xs">Refresh</span>
             </Button>
           </div>
-          {lastUpdated ? (
-            <span className="font-mono text-[10px] text-muted-foreground">
-              {formatAgo(lastUpdated)}
-            </span>
-          ) : null}
         </div>
       </div>
     </header>
