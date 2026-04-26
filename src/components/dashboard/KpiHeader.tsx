@@ -57,7 +57,7 @@ const cards = [
   },
 ];
 
-export function KpiHeader({ kpi, loading }: KpiHeaderProps) {
+export function KpiHeader({ kpi, loading, refreshing, onRefresh, lastUpdated }: KpiHeaderProps) {
   return (
     <header className="border-b border-border bg-panel/80 backdrop-blur-sm">
       <div className="flex items-center justify-between gap-6 px-6 py-3">
