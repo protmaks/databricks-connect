@@ -12,32 +12,34 @@ interface KpiHeaderProps {
 const cards = [
   {
     key: "total_facilities" as const,
-    label: "Facilities Mapped",
+    label: "Facilities",
     icon: Stethoscope,
     accent: "text-foreground",
-    glow: "",
   },
   {
-    key: "states_covered" as const,
-    label: "States Covered",
-    icon: MapPin,
-    accent: "text-accent",
-    glow: "",
+    key: "verified_count" as const,
+    label: "Tavily Verified",
+    icon: ShieldCheck,
+    accent: "text-trust-high",
   },
   {
     key: "avg_trust" as const,
     label: "Avg Trust Score",
-    icon: ShieldCheck,
-    accent: "text-trust-high",
-    glow: "",
+    icon: Activity,
+    accent: "text-accent",
     fmt: (v: number) => v.toFixed(2),
   },
   {
     key: "anomalies" as const,
-    label: "Anomalies Detected",
+    label: "Anomalies",
     icon: AlertTriangle,
     accent: "text-trust-low",
-    glow: "",
+  },
+  {
+    key: "states_covered" as const,
+    label: "States",
+    icon: MapPin,
+    accent: "text-foreground",
   },
 ];
 
@@ -59,7 +61,7 @@ export function KpiHeader({ kpi, loading }: KpiHeaderProps) {
           </div>
         </div>
 
-        <div className="grid flex-1 grid-cols-2 gap-3 md:grid-cols-4 max-w-3xl">
+        <div className="grid flex-1 grid-cols-2 gap-3 md:grid-cols-5 max-w-4xl">
           {cards.map((c, i) => {
             const value = kpi ? (kpi[c.key] as number) : 0;
             const formatted = c.fmt ? c.fmt(value) : formatNumber(value);
