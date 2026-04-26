@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { SlidersHorizontal } from "lucide-react";
 import { KpiHeader } from "@/components/dashboard/KpiHeader";
 import { FiltersSidebar } from "@/components/dashboard/FiltersSidebar";
 import { MapView } from "@/components/dashboard/MapView";
 import { AgentDetailPanel } from "@/components/dashboard/AgentDetailPanel";
 import { AiMatchesPanel } from "@/components/dashboard/AiMatchesPanel";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { fetchSnapshot } from "@/lib/api";
 import { buildAggregate, filterFacilities } from "@/lib/filter";
 import { DEFAULT_FILTERS, type Facility, type FilterState } from "@/lib/types";
@@ -16,6 +19,7 @@ const Index = () => {
   const [selected, setSelected] = useState<Facility | null>(null);
   const [agentPlan, setAgentPlan] = useState<QueryPlan | null>(null);
   const [agentQuery, setAgentQuery] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const snapshotQ = useQuery({
@@ -54,6 +58,7 @@ const Index = () => {
     setSelected(null);
     setAgentPlan(plan);
     setAgentQuery(query);
+    setFiltersOpen(false);
   };
 
   const handleFiltersChange = (next: FilterState) => {
@@ -64,6 +69,7 @@ const Index = () => {
 
   const handleSelectFromMatches = (f: Facility) => {
     setSelected(f);
+    setFiltersOpen(false);
   };
 
   const handleRefresh = async () => {
@@ -89,13 +95,40 @@ const Index = () => {
         onRefresh={handleRefresh}
         lastUpdated={snapshotQ.dataUpdatedAt || null}
       />
-      <div className="flex min-h-0 flex-1">
-        <FiltersSidebar
-          filters={filters}
-          onChange={handleFiltersChange}
-          states={aggregate.states}
-          onAgentPlan={handleAgentPlan}
-        />
+      <div className="relative flex min-h-0 flex-1">
+        {/* Desktop sidebar */}
+        <div className="hidden md:flex">
+          <FiltersSidebar
+            filters={filters}
+            onChange={handleFiltersChange}
+            states={aggregate.states}
+            onAgentPlan={handleAgentPlan}
+          />
+        </div>
+
+        {/* Mobile filters toggle */}
+        <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+          <SheetTrigger asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              className="absolute left-3 top-3 z-30 h-9 gap-1.5 bg-card/90 backdrop-blur md:hidden"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              <span className="text-xs">Filters & AI</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[88vw] max-w-sm border-border bg-panel p-0 sm:w-96">
+            <SheetTitle className="sr-only">Filters and AI search</SheetTitle>
+            <FiltersSidebar
+              filters={filters}
+              onChange={handleFiltersChange}
+              states={aggregate.states}
+              onAgentPlan={handleAgentPlan}
+            />
+          </SheetContent>
+        </Sheet>
+
         <main className="relative flex min-w-0 flex-1">
           <div className="relative min-w-0 flex-1">
             <MapView
@@ -117,7 +150,7 @@ const Index = () => {
             )}
           </div>
           {agentPlan && (
-            <div className="h-full w-[360px] max-w-[45%] shrink-0">
+            <div className="absolute inset-0 z-20 h-full w-full md:static md:w-[360px] md:max-w-[45%] md:shrink-0">
               <AiMatchesPanel
                 plan={agentPlan}
                 results={agentMatches}
@@ -128,7 +161,7 @@ const Index = () => {
             </div>
           )}
           {selected && (
-            <div className="h-full w-[360px] max-w-[45%] shrink-0">
+            <div className="absolute inset-0 z-30 h-full w-full md:static md:w-[360px] md:max-w-[45%] md:shrink-0">
               <AgentDetailPanel
                 facility={selected}
                 onClose={() => setSelected(null)}

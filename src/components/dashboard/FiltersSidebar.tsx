@@ -62,7 +62,7 @@ export function FiltersSidebar({ filters, onChange, states, onAgentPlan }: Sideb
   }
 
   return (
-    <aside className="flex h-full w-72 flex-col border-r border-border bg-panel">
+    <aside className="flex h-full w-full flex-col bg-panel md:w-72 md:border-r md:border-border">
       <div className="border-b border-border p-4 space-y-3">
         <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">
           AI Search Intent
