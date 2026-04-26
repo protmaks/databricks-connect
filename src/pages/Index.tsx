@@ -10,7 +10,6 @@ import { buildAggregate, filterFacilities } from "@/lib/filter";
 import { DEFAULT_FILTERS, type Facility, type FilterState } from "@/lib/types";
 import { runAgentSearch, type QueryPlan } from "@/lib/agentSearch";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 
 const Index = () => {
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
@@ -90,47 +89,43 @@ const Index = () => {
           states={aggregate.states}
           onAgentPlan={handleAgentPlan}
         />
-        <main className="relative min-w-0 flex-1">
-          <MapView
-            points={aggregate.points}
-            facilities={filtered}
-            onFacilityClick={setSelected}
-            anomalyMode={filters.onlyAnomalies}
-            highlightIds={highlightIds}
-          />
-          {(agentPlan || selected) && (
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-20 flex h-full w-full max-w-full sm:w-[min(820px,100%)] md:w-[min(900px,80%)]">
-              <div className="pointer-events-auto flex h-full w-full">
-                {agentPlan && (
-                  <div className={cn("h-full min-w-0", selected ? "w-1/2" : "w-full")}>
-                    <AiMatchesPanel
-                      plan={agentPlan}
-                      results={agentMatches}
-                      query={agentQuery}
-                      onClose={() => setAgentPlan(null)}
-                      onSelect={handleSelectFromMatches}
-                    />
-                  </div>
-                )}
-                {selected && (
-                  <div className={cn("h-full min-w-0", agentPlan ? "w-1/2" : "w-full")}>
-                    <AgentDetailPanel
-                      facility={selected}
-                      onClose={() => setSelected(null)}
-                    />
-                  </div>
-                )}
+        <main className="relative flex min-w-0 flex-1">
+          <div className="relative min-w-0 flex-1">
+            <MapView
+              points={aggregate.points}
+              facilities={filtered}
+              onFacilityClick={setSelected}
+              anomalyMode={filters.onlyAnomalies}
+              highlightIds={highlightIds}
+            />
+            {snapshotQ.isLoading && (
+              <div className="pointer-events-none absolute right-4 top-4 rounded-md border border-border bg-card/80 px-3 py-1.5 font-mono text-[11px] text-muted-foreground backdrop-blur">
+                Loading 10K facilities…
               </div>
+            )}
+            {snapshotQ.isFetching && !snapshotQ.isLoading && (
+              <div className="pointer-events-none absolute right-4 top-4 rounded-md border border-border bg-card/40 px-3 py-1 font-mono text-[10px] text-muted-foreground/70 backdrop-blur">
+                Refreshing…
+              </div>
+            )}
+          </div>
+          {agentPlan && (
+            <div className="h-full w-[360px] max-w-[45%] shrink-0">
+              <AiMatchesPanel
+                plan={agentPlan}
+                results={agentMatches}
+                query={agentQuery}
+                onClose={() => setAgentPlan(null)}
+                onSelect={handleSelectFromMatches}
+              />
             </div>
           )}
-          {snapshotQ.isLoading && (
-            <div className="pointer-events-none absolute right-4 top-4 rounded-md border border-border bg-card/80 px-3 py-1.5 font-mono text-[11px] text-muted-foreground backdrop-blur">
-              Loading 10K facilities…
-            </div>
-          )}
-          {snapshotQ.isFetching && !snapshotQ.isLoading && (
-            <div className="pointer-events-none absolute right-4 top-4 rounded-md border border-border bg-card/40 px-3 py-1 font-mono text-[10px] text-muted-foreground/70 backdrop-blur">
-              Refreshing…
+          {selected && (
+            <div className="h-full w-[360px] max-w-[45%] shrink-0">
+              <AgentDetailPanel
+                facility={selected}
+                onClose={() => setSelected(null)}
+              />
             </div>
           )}
         </main>

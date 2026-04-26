@@ -70,10 +70,10 @@ export function AgentDetailPanel({ facility, onClose }: AgentPanelProps) {
       {facility && (
         <motion.aside
           key={facility.id}
-          initial={{ x: 380, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: 380, opacity: 0 }}
-          transition={{ type: "spring", damping: 24, stiffness: 220 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
           className="z-30 flex h-full w-full min-w-0 flex-col border-l border-border bg-panel shadow-2xl"
           onAnimationComplete={() => setReport(null)}
         >
@@ -97,8 +97,8 @@ export function AgentDetailPanel({ facility, onClose }: AgentPanelProps) {
                   </Button>
                 </div>
 
-                <ScrollArea className="flex-1 scrollbar-thin">
-                  <div className="space-y-5 p-4">
+                <ScrollArea className="flex-1 scrollbar-thin [&>[data-radix-scroll-area-viewport]>div]:!block">
+                  <div className="w-full min-w-0 space-y-5 overflow-hidden p-4">
                     <div className="flex items-center gap-4 rounded-md border border-border bg-card/40 p-3">
                       <TrustGauge score={facility.trust_score} />
                       <div className="space-y-1 text-xs">
