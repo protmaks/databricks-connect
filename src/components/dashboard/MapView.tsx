@@ -85,14 +85,17 @@ export function MapView({ points, facilities, onFacilityClick, anomalyMode }: Ma
       radiusUnits: "pixels",
       getPosition: (f: Facility) => [f.lon, f.lat],
       getRadius: (f: Facility) => (f.is_suspicious ? pointRadius + 1.5 : pointRadius),
-      getFillColor: (f: Facility) => trustToRGBA(f.trust_score, 230),
-      getLineColor: [10, 14, 26, 220],
+      getFillColor: (f: Facility) =>
+        anomalyMode ? [220, 38, 38, 235] : trustToRGBA(f.trust_score, 230),
+      getLineColor: anomalyMode ? [127, 29, 29, 240] : [10, 14, 26, 220],
       lineWidthMinPixels: 1,
       onClick: (info) => {
         if (info.object) onFacilityClick(info.object as Facility);
       },
       updateTriggers: {
         getRadius: [pointRadius],
+        getFillColor: [anomalyMode],
+        getLineColor: [anomalyMode],
       },
     });
 
