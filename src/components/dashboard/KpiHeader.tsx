@@ -72,6 +72,17 @@ export function KpiHeader({ kpi, loading, refreshing, onRefresh, lastUpdated }: 
             <p className="text-xs text-muted-foreground">
               India healthcare graph · Trust Score by Agentic AI
             </p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
+              Developed by{" "}
+              <a
+                href="https://www.linkedin.com/in/protmaks/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Maksim Pachkouski
+              </a>
+            </p>
           </div>
         </div>
 
