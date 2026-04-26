@@ -99,28 +99,31 @@ const Index = () => {
             highlightIds={highlightIds}
           />
           {(agentPlan || selected) && (
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-20 flex h-full w-full max-w-full">
-              <div className="pointer-events-auto flex h-full w-full">
-                {agentPlan && (
-                  <div className={cn("h-full min-w-0", selected ? "w-1/2" : "w-full")}>
-                    <AiMatchesPanel
-                      plan={agentPlan}
-                      results={agentMatches}
-                      query={agentQuery}
-                      onClose={() => setAgentPlan(null)}
-                      onSelect={handleSelectFromMatches}
-                    />
-                  </div>
-                )}
-                {selected && (
-                  <div className={cn("h-full min-w-0", agentPlan ? "w-1/2" : "w-full")}>
-                    <AgentDetailPanel
-                      facility={selected}
-                      onClose={() => setSelected(null)}
-                    />
-                  </div>
-                )}
-              </div>
+            <div
+              className={cn(
+                "absolute inset-y-0 right-0 z-20 grid h-full w-full",
+                agentPlan && selected ? "grid-cols-2" : "grid-cols-1",
+              )}
+            >
+              {agentPlan && (
+                <div className="h-full min-w-0 overflow-hidden">
+                  <AiMatchesPanel
+                    plan={agentPlan}
+                    results={agentMatches}
+                    query={agentQuery}
+                    onClose={() => setAgentPlan(null)}
+                    onSelect={handleSelectFromMatches}
+                  />
+                </div>
+              )}
+              {selected && (
+                <div className="h-full min-w-0 overflow-hidden">
+                  <AgentDetailPanel
+                    facility={selected}
+                    onClose={() => setSelected(null)}
+                  />
+                </div>
+              )}
             </div>
           )}
           {snapshotQ.isLoading && (
