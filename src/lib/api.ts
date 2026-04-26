@@ -147,6 +147,16 @@ export async function fetchFacilities(filters: FilterState, limit = 1500): Promi
   return (data?.facilities ?? []).map(normalizeFacility);
 }
 
+// One-shot snapshot of the entire table. Server cached for 5 min,
+// client cached via React Query (and optionally localStorage).
+export async function fetchSnapshot(): Promise<Facility[]> {
+  const { data, error } = await supabase.functions.invoke("facilities-snapshot", {
+    body: {},
+  });
+  if (error) throw error;
+  return (data?.facilities ?? []).map(normalizeFacility);
+}
+
 export async function nlSearch(query: string): Promise<Partial<FilterState>> {
   const { data, error } = await supabase.functions.invoke("nl-search", {
     body: { query },
