@@ -149,9 +149,9 @@ export async function fetchFacilities(filters: FilterState, limit = 1500): Promi
 
 // One-shot snapshot of the entire table. Server cached for 5 min,
 // client cached via React Query (and optionally localStorage).
-export async function fetchSnapshot(): Promise<Facility[]> {
+export async function fetchSnapshot(force = false): Promise<Facility[]> {
   const { data, error } = await supabase.functions.invoke("facilities-snapshot", {
-    body: {},
+    body: { force },
   });
   if (error) throw error;
   return (data?.facilities ?? []).map(normalizeFacility);
