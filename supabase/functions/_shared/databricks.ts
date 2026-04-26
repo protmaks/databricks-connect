@@ -101,15 +101,48 @@ export async function runSql(
     }));
   }
 
-  const submit = await fetch(`${GATEWAY_URL}/2.0/sql/statements`, {
-    method: "POST",
-    headers: h,
-    body: JSON.stringify(body),
-  });
-  const initial = await submit.json();
-  if (!submit.ok) {
-    throw new Error(`Databricks submit failed [${submit.status}]: ${JSON.stringify(initial)}`);
+  async function safeJson(res: Response): Promise<unknown> {
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      // Gateway sometimes returns plain text like "upstream connect error..." on 5xx.
+      throw new Error(`Databricks gateway non-JSON [${res.status}]: ${text.slice(0, 300)}`);
+    }
   }
+
+  async function submitOnce(): Promise<{ res: Response; data: any }> {
+    const res = await fetch(`${GATEWAY_URL}/2.0/sql/statements`, {
+      method: "POST",
+      headers: h,
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const data = await safeJson(res).catch((e) => ({ _err: (e as Error).message }));
+      throw new Error(`Databricks submit failed [${res.status}]: ${JSON.stringify(data)}`);
+    }
+    const data = await safeJson(res);
+    return { res, data: data as any };
+  }
+
+  // Retry submit on transient gateway failures (502/503/504 / non-JSON).
+  let initial: any;
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const out = await submitOnce();
+      initial = out.data;
+      lastErr = null;
+      break;
+    } catch (e) {
+      lastErr = e;
+      const msg = (e as Error).message;
+      const transient = /\b(502|503|504)\b/.test(msg) || /non-JSON/.test(msg) || /upstream/i.test(msg);
+      if (!transient) throw e;
+      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+    }
+  }
+  if (!initial) throw lastErr ?? new Error("Databricks submit failed");
 
   let current = initial;
   const id = current.statement_id;
@@ -121,8 +154,11 @@ export async function runSql(
     }
     await new Promise((r) => setTimeout(r, 1000));
     const poll = await fetch(`${GATEWAY_URL}/2.0/sql/statements/${id}`, { headers: h });
-    current = await poll.json();
-    if (!poll.ok) throw new Error(`Databricks poll failed [${poll.status}]: ${JSON.stringify(current)}`);
+    if (!poll.ok) {
+      const data = await safeJson(poll).catch((e) => ({ _err: (e as Error).message }));
+      throw new Error(`Databricks poll failed [${poll.status}]: ${JSON.stringify(data)}`);
+    }
+    current = await safeJson(poll) as any;
   }
 
   if (current.status?.state !== "SUCCEEDED") {
