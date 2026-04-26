@@ -100,7 +100,8 @@ const Index = () => {
           <AgentDetailPanel
             facility={selected}
             onClose={() => setSelected(null)}
-            offsetRight={agentPlan ? 340 : 0}
+            offsetRight={agentPlan ? "50%" : 0}
+            compact={Boolean(agentPlan)}
           />
           <AiMatchesPanel
             plan={agentPlan}
@@ -108,6 +109,7 @@ const Index = () => {
             query={agentQuery}
             onClose={() => setAgentPlan(null)}
             onSelect={handleSelectFromMatches}
+            compact={Boolean(selected)}
           />
           {snapshotQ.isLoading && (
             <div className="pointer-events-none absolute right-4 top-4 rounded-md border border-border bg-card/80 px-3 py-1.5 font-mono text-[11px] text-muted-foreground backdrop-blur">
