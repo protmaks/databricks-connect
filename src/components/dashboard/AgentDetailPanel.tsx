@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 interface AgentPanelProps {
   facility: Facility | null;
   onClose: () => void;
+  offsetRight?: number;
 }
 
 function TrustGauge({ score }: { score: number }) {
@@ -47,7 +48,7 @@ function TrustGauge({ score }: { score: number }) {
   );
 }
 
-export function AgentDetailPanel({ facility, onClose }: AgentPanelProps) {
+export function AgentDetailPanel({ facility, onClose, offsetRight = 0 }: AgentPanelProps) {
   const [report, setReport] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -74,7 +75,8 @@ export function AgentDetailPanel({ facility, onClose }: AgentPanelProps) {
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 420, opacity: 0 }}
           transition={{ type: "spring", damping: 24, stiffness: 220 }}
-          className="absolute right-0 top-0 z-20 flex h-full w-[400px] flex-col border-l border-border bg-panel shadow-2xl"
+          style={{ right: offsetRight }}
+          className="absolute top-0 z-30 flex h-full w-[400px] flex-col border-l border-border bg-panel shadow-2xl"
           onAnimationComplete={() => setReport(null)}
         >
           {(() => {
