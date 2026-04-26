@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       params.push({ name: "search", value: `%${body.search}%` });
     }
     if (body.onlyAnomalies) {
-      where.push(`(is_suspicious = 1 OR (${EFFECTIVE_TRUST_SQL}) < 0.4)`);
+      where.push(`(is_suspicious = 1 OR (${EFFECTIVE_TRUST_SQL}) < 0.4) AND COALESCE(is_validated_safe, 0) = 0`);
     }
     if (body.onlyVerified) {
       where.push("tavily_verified = true");
@@ -92,7 +92,8 @@ Deno.serve(async (req) => {
         tavily_check_status,
         tavily_evidence_urls,
         tavily_evidence_snippets,
-        CAST(last_tavily_check_date AS STRING) AS last_tavily_check_date
+        CAST(last_tavily_check_date AS STRING) AS last_tavily_check_date,
+        COALESCE(is_validated_safe, 0) AS is_validated_safe
       FROM ${TABLE}
       WHERE ${where.join(" AND ")}
         AND (${EFFECTIVE_TRUST_SQL}) >= ${minTrust}
