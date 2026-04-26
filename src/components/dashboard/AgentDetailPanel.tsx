@@ -71,12 +71,12 @@ export function AgentDetailPanel({ facility, onClose, offsetRight = 0 }: AgentPa
       {facility && (
         <motion.aside
           key={facility.id}
-          initial={{ x: 420, opacity: 0 }}
+          initial={{ x: 380, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          exit={{ x: 420, opacity: 0 }}
+          exit={{ x: 380, opacity: 0 }}
           transition={{ type: "spring", damping: 24, stiffness: 220 }}
           style={{ right: offsetRight }}
-          className="absolute top-0 z-30 flex h-full w-[400px] flex-col border-l border-border bg-panel shadow-2xl"
+          className="absolute top-0 z-30 flex h-full w-[360px] max-w-[calc(100vw-20rem)] flex-col border-l border-border bg-panel shadow-2xl"
           onAnimationComplete={() => setReport(null)}
         >
           {(() => {

@@ -21,11 +21,11 @@ export function AiMatchesPanel({ plan, results, query, onClose, onSelect }: AiMa
     <AnimatePresence>
       {plan && (
         <motion.div
-          initial={{ x: 380, opacity: 0 }}
+          initial={{ x: 340, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          exit={{ x: 380, opacity: 0 }}
+          exit={{ x: 340, opacity: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 30 }}
-          className="absolute right-0 top-0 z-20 flex h-full w-[380px] flex-col border-l border-border bg-panel/95 backdrop-blur"
+          className="absolute right-0 top-0 z-20 flex h-full w-[340px] max-w-[calc(100vw-18rem)] flex-col border-l border-border bg-panel/95 backdrop-blur"
         >
           <header className="flex items-start justify-between gap-2 border-b border-border p-4">
             <div className="min-w-0 flex-1">
