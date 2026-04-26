@@ -91,7 +91,6 @@ export interface FilterState {
   state: string | null;
   onlyAnomalies: boolean;
   onlyVerified: boolean;
-  showDeserts: boolean;
 }
 
 export const DEFAULT_FILTERS: FilterState = {
@@ -101,7 +100,6 @@ export const DEFAULT_FILTERS: FilterState = {
   state: null,
   onlyAnomalies: false,
   onlyVerified: false,
-  showDeserts: false,
 };
 
 export const FACILITY_TYPE_OPTIONS: { value: string; label: string }[] = [

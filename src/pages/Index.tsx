@@ -68,7 +68,6 @@ const Index = () => {
             points={aggregate.points}
             facilities={scatterFacilities}
             onFacilityClick={setSelected}
-            showDeserts={filters.showDeserts}
           />
           <AgentDetailPanel facility={selected} onClose={() => setSelected(null)} />
           {snapshotQ.isLoading && (

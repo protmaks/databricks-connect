@@ -137,13 +137,6 @@ export function FiltersSidebar({ filters, onChange, states }: SidebarProps) {
                 onCheckedChange={(v) => onChange({ ...filters, onlyAnomalies: v })}
               />
             </div>
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">Show medical deserts</Label>
-              <Switch
-                checked={filters.showDeserts}
-                onCheckedChange={(v) => onChange({ ...filters, showDeserts: v })}
-              />
-            </div>
           </section>
 
           <section>
