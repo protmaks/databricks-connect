@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import DeckGL from "@deck.gl/react";
 import { HexagonLayer } from "@deck.gl/aggregation-layers";
 import { ScatterplotLayer } from "@deck.gl/layers";
@@ -13,6 +13,9 @@ interface MapViewProps {
   onFacilityClick: (f: Facility) => void;
   showDeserts: boolean;
 }
+
+// Above this zoom we hide the aggregated 3D hex layer and show individual points.
+const HEX_HIDE_ZOOM = 7;
 
 const INITIAL_VIEW_STATE = {
   longitude: 79.0,
