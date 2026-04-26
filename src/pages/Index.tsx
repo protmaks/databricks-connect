@@ -39,12 +39,17 @@ const Index = () => {
   const scatterFacilities = useMemo(() => filtered.slice(0, 2000), [filtered]);
 
   const handleRefresh = async () => {
-    toast.info("Refreshing facilities…");
-    await queryClient.fetchQuery({
-      queryKey: ["snapshot"],
-      queryFn: () => fetchSnapshot(true),
-    });
-    toast.success("Facilities refreshed");
+    const t = toast.loading("Refreshing facilities…");
+    try {
+      const fresh = await fetchSnapshot(true);
+      queryClient.setQueryData(["snapshot"], fresh);
+      toast.success(`Facilities refreshed (${fresh.length})`, { id: t });
+    } catch (err) {
+      toast.error("Refresh failed", {
+        id: t,
+        description: err instanceof Error ? err.message : "Unknown",
+      });
+    }
   };
 
   return (
