@@ -17,7 +17,7 @@ const Index = () => {
   // ONE network request — everything else is computed in-memory.
   const snapshotQ = useQuery({
     queryKey: ["snapshot"],
-    queryFn: fetchSnapshot,
+    queryFn: () => fetchSnapshot(),
   });
 
   useEffect(() => {
