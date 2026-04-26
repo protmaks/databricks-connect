@@ -9,12 +9,25 @@ interface Body {
 }
 
 const SYSTEM = `You convert healthcare search intents about Indian medical facilities into a strict JSON object.
+
+IMPORTANT:
+- Be tolerant of typos and misspellings, especially for Indian state and city names. Examples:
+  "Delhy", "Dehli", "delhii" -> "Delhi"
+  "Bihaar", "Bhihar" -> "Bihar"
+  "Karnatka", "Karnatika" -> "Karnataka"
+  "Maharastra", "Maharasthra" -> "Maharashtra"
+  "Tamilnadu", "Tamil Nadu", "TN" -> "Tamil Nadu"
+  "UP", "Uttar Pradesh" -> "Uttar Pradesh"
+  "Bombay" -> "Maharashtra", "Bangalore"/"Bengaluru" -> "Karnataka"
+- If the user mentions ANY city, district or region of India, infer the corresponding Indian state and put it in "state".
+- Use canonical state names with normal capitalization (e.g. "Delhi", "Tamil Nadu", "Uttar Pradesh").
+
 Return ONLY JSON matching this schema:
 {
-  "facilityTypes": string[]   // subset of ["hospital","clinic","doctor","dentist","pharmacy","ayush","specialist","diagnostic"]; [] if none
+  "facilityTypes": string[]   // subset of ["hospital","clinic","doctor","dentist","pharmacy"]; [] if none
   "minTrust": number          // 0..1; use 0.7 for "verified", 0.4 for "trusted", 0 otherwise
-  "state": string | null      // Indian state in lowercase if mentioned, else null
-  "search": string | null     // free-text keyword for name match (e.g. "surgeon", "trauma"), else null
+  "state": string | null      // Canonical Indian state name (corrected for typos), else null
+  "search": string | null     // free-text keyword for name/specialty match (e.g. "surgeon", "trauma", "cardiology"), else null
   "onlyAnomalies": boolean,   // true only if user explicitly asks for suspicious/unverified ones
   "onlyVerified": boolean     // true only if user explicitly asks for Tavily-verified / externally verified facilities
 }`;
