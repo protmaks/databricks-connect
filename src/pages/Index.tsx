@@ -51,8 +51,15 @@ const Index = () => {
   );
 
   const handleAgentPlan = (plan: QueryPlan, query: string) => {
+    setSelected(null);
     setAgentPlan(plan);
     setAgentQuery(query);
+  };
+
+  const handleFiltersChange = (next: FilterState) => {
+    setFilters(next);
+    setSelected(null);
+    setAgentPlan(null);
   };
 
   const handleSelectFromMatches = (f: Facility) => {
