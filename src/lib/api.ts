@@ -15,6 +15,28 @@ const toNum = (v: unknown, fallback = 0): number => {
   return Number.isFinite(n) ? n : fallback;
 };
 
+const toStrArr = (v: unknown): string[] | null => {
+  if (!v) return null;
+  if (Array.isArray(v)) return v.map(String);
+  if (typeof v === "string") {
+    try {
+      const p = JSON.parse(v);
+      return Array.isArray(p) ? p.map(String) : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
+const toBool = (v: unknown): boolean | null => {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "boolean") return v;
+  if (typeof v === "string") return v.toLowerCase() === "true";
+  if (typeof v === "number") return v !== 0;
+  return null;
+};
+
 function normalizeFacility(raw: Record<string, unknown>): Facility {
   return {
     id: String(raw.id ?? raw.name ?? Math.random()),
@@ -24,11 +46,20 @@ function normalizeFacility(raw: Record<string, unknown>): Facility {
     facility_type: String(raw.facility_type ?? "unknown"),
     state: (raw.state as string) ?? null,
     district: (raw.district as string) ?? null,
+    address_line1: (raw.address_line1 as string) ?? null,
+    zip: (raw.zip as string) ?? null,
+    phone_numbers: (raw.phone_numbers as string) ?? null,
+    email: (raw.email as string) ?? null,
+    websites: (raw.websites as string) ?? null,
     trust_label: String(raw.trust_label ?? "Unverified"),
+    original_trust_label: (raw.original_trust_label as string) ?? null,
+    tavily_updated_trust_score: (raw.tavily_updated_trust_score as string) ?? null,
     trust_score: toNum(raw.trust_score, 0.5),
     capacity: raw.capacity == null ? null : toNum(raw.capacity, 0),
     doctors: raw.doctors == null ? null : toNum(raw.doctors, 0),
     specialties: (raw.specialties as string) ?? null,
+    equipment: (raw.equipment as string) ?? null,
+    capability: (raw.capability as string) ?? null,
     is_suspicious: toNum(raw.is_suspicious),
     has_icu: toNum(raw.has_icu),
     has_trauma: toNum(raw.has_trauma),
@@ -37,9 +68,15 @@ function normalizeFacility(raw: Record<string, unknown>): Facility {
     has_oncology: toNum(raw.has_oncology),
     has_dialysis: toNum(raw.has_dialysis),
     has_nicu: toNum(raw.has_nicu),
+    icu_citations: toStrArr(raw.icu_citations),
     reasoning: (raw.reasoning as string) ?? null,
-    missing_evidence: (raw.missing_evidence as string[]) ?? null,
-    supporting_evidence: (raw.supporting_evidence as string[]) ?? null,
+    missing_evidence: toStrArr(raw.missing_evidence),
+    supporting_evidence: toStrArr(raw.supporting_evidence),
+    tavily_verified: toBool(raw.tavily_verified),
+    tavily_check_status: (raw.tavily_check_status as string) ?? null,
+    tavily_evidence_urls: toStrArr(raw.tavily_evidence_urls),
+    tavily_evidence_snippets: toStrArr(raw.tavily_evidence_snippets),
+    last_tavily_check_date: (raw.last_tavily_check_date as string) ?? null,
   };
 }
 
@@ -50,6 +87,8 @@ function normalizeKpi(raw: Record<string, unknown>): KpiSummary {
     avg_trust: toNum(raw.avg_trust),
     anomalies: toNum(raw.anomalies),
     states_covered: toNum(raw.states_covered),
+    verified_count: toNum(raw.verified_count),
+    checked_count: toNum(raw.checked_count),
   };
 }
 
@@ -58,6 +97,7 @@ function normalizeStates(rows: Record<string, unknown>[]): StateAggregate[] {
     state: String(r.state ?? "Unknown"),
     facility_count: toNum(r.facility_count),
     avg_trust: toNum(r.avg_trust, 0.5),
+    verified_count: toNum(r.verified_count),
     lat: toNum(r.lat),
     lon: toNum(r.lon),
   }));
@@ -71,6 +111,7 @@ function normalizePoints(rows: Record<string, unknown>[]): PointAggregate[] {
       trust: toNum(r.trust, 0.5),
       weight: toNum(r.weight, 1),
       suspicious: toNum(r.suspicious),
+      verified: toNum(r.verified),
     }))
     .filter((p) => p.lat !== 0 && p.lon !== 0);
 }
@@ -82,6 +123,7 @@ function buildBody(filters: FilterState) {
     state: filters.state,
     search: filters.search ?? undefined,
     onlyAnomalies: filters.onlyAnomalies,
+    onlyVerified: filters.onlyVerified,
   };
 }
 
@@ -117,6 +159,7 @@ export async function nlSearch(query: string): Promise<Partial<FilterState>> {
     state: typeof f.state === "string" ? f.state : null,
     search: typeof f.search === "string" ? f.search : null,
     onlyAnomalies: Boolean(f.onlyAnomalies),
+    onlyVerified: Boolean(f.onlyVerified),
   };
 }
 
