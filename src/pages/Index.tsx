@@ -99,7 +99,7 @@ const Index = () => {
             highlightIds={highlightIds}
           />
           {(agentPlan || selected) && (
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-20 flex h-full w-full max-w-full sm:w-[min(820px,100%)] md:w-[min(900px,80%)]">
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-20 flex h-full w-full max-w-full">
               <div className="pointer-events-auto flex h-full w-full">
                 {agentPlan && (
                   <div className={cn("h-full min-w-0", selected ? "w-1/2" : "w-full")}>
