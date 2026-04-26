@@ -11,7 +11,6 @@ interface MapViewProps {
   points: PointAggregate[];
   facilities: Facility[];
   onFacilityClick: (f: Facility) => void;
-  showDeserts: boolean;
 }
 
 // Above this zoom we hide the aggregated 3D hex layer and show individual points.
@@ -30,7 +29,7 @@ const INITIAL_VIEW_STATE = {
 // CARTO dark — free, no token
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
-export function MapView({ points, facilities, onFacilityClick, showDeserts }: MapViewProps) {
+export function MapView({ points, facilities, onFacilityClick }: MapViewProps) {
   const [zoom, setZoom] = useState<number>(INITIAL_VIEW_STATE.zoom as unknown as number);
   const showHex = zoom < HEX_HIDE_ZOOM;
   // Scale point radius up as we zoom in for better visibility.
@@ -61,33 +60,10 @@ export function MapView({ points, facilities, onFacilityClick, showDeserts }: Ma
           coverage: 0.85,
           colorRange,
           pickable: false,
-          opacity: showDeserts ? 0.35 : 0.85,
+          opacity: 0.85,
           material: { ambient: 0.6, diffuse: 0.8, shininess: 32 },
         })
       : null;
-
-    const desert =
-      showHex && showDeserts
-        ? new HexagonLayer({
-            id: "facility-desert",
-            data: points,
-            getPosition: (d: PointAggregate) => [d.lon, d.lat],
-            getElevationWeight: () => 1,
-            radius: 35000,
-            extruded: false,
-            opacity: 0.25,
-            colorRange: [
-              [127, 29, 29],
-              [185, 28, 28],
-              [220, 38, 38],
-              [239, 68, 68],
-              [248, 113, 113],
-              [254, 202, 202],
-            ],
-            getColorWeight: () => 1,
-            colorAggregation: "SUM",
-          })
-        : null;
 
     const scatter = new ScatterplotLayer({
       id: "facility-points",
@@ -109,8 +85,8 @@ export function MapView({ points, facilities, onFacilityClick, showDeserts }: Ma
       },
     });
 
-    return [hex, desert, scatter].filter(Boolean) as NonNullable<typeof scatter>[];
-  }, [points, facilities, showDeserts, onFacilityClick, showHex, pointRadius]);
+    return [hex, scatter].filter(Boolean) as NonNullable<typeof scatter>[];
+  }, [points, facilities, onFacilityClick, showHex, pointRadius]);
 
   return (
     <div className="relative h-full w-full">
