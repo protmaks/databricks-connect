@@ -12,6 +12,7 @@ interface MapViewProps {
   facilities: Facility[];
   onFacilityClick: (f: Facility) => void;
   anomalyMode: boolean;
+  highlightIds?: Set<string>;
 }
 
 // Above this zoom we hide the aggregated 3D hex layer and show individual points.
@@ -30,7 +31,7 @@ const INITIAL_VIEW_STATE = {
 // CARTO dark — free, no token
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
-export function MapView({ points, facilities, onFacilityClick, anomalyMode }: MapViewProps) {
+export function MapView({ points, facilities, onFacilityClick, anomalyMode, highlightIds }: MapViewProps) {
   const [zoom, setZoom] = useState<number>(INITIAL_VIEW_STATE.zoom as unknown as number);
   // In anomaly mode we always show individual points (no hex aggregation) so 148 anomalies
   // don't visually inflate into entire painted regions.
@@ -101,8 +102,31 @@ export function MapView({ points, facilities, onFacilityClick, anomalyMode }: Ma
       },
     });
 
-    return [hex, scatter].filter(Boolean) as NonNullable<typeof scatter>[];
-  }, [points, facilities, onFacilityClick, showHex, pointRadius, anomalyMode]);
+    // AI-match highlight halo — sits on top of regular points.
+    const highlightData = highlightIds && highlightIds.size > 0
+      ? facilities.filter((f) => highlightIds.has(f.id))
+      : [];
+    const highlight = highlightData.length > 0
+      ? new ScatterplotLayer({
+          id: "ai-match-highlight",
+          data: highlightData,
+          pickable: true,
+          stroked: true,
+          filled: false,
+          radiusUnits: "pixels",
+          getPosition: (f: Facility) => [f.lon, f.lat],
+          getRadius: pointRadius * 3.2,
+          getLineColor: [56, 189, 248, 240],
+          lineWidthMinPixels: 2.5,
+          onClick: (info) => {
+            if (info.object) onFacilityClick(info.object as Facility);
+          },
+          updateTriggers: { getRadius: [pointRadius] },
+        })
+      : null;
+
+    return [hex, scatter, highlight].filter(Boolean) as NonNullable<typeof scatter>[];
+  }, [points, facilities, onFacilityClick, showHex, pointRadius, anomalyMode, highlightIds]);
 
   return (
     <div className="relative h-full w-full">

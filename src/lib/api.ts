@@ -158,19 +158,29 @@ export async function fetchSnapshot(force = false): Promise<Facility[]> {
   return (data?.facilities ?? []).map(normalizeFacility);
 }
 
-export async function nlSearch(query: string): Promise<Partial<FilterState>> {
+import type { QueryPlan } from "./agentSearch";
+
+export async function nlSearch(query: string): Promise<QueryPlan> {
   const { data, error } = await supabase.functions.invoke("nl-search", {
     body: { query },
   });
   if (error) throw error;
-  const f = data?.filters ?? {};
+  const p = data?.plan ?? {};
   return {
-    facilityTypes: Array.isArray(f.facilityTypes) ? f.facilityTypes : [],
-    minTrust: typeof f.minTrust === "number" ? f.minTrust : 0,
-    state: typeof f.state === "string" ? f.state : null,
-    search: typeof f.search === "string" ? f.search : null,
-    onlyAnomalies: Boolean(f.onlyAnomalies),
-    onlyVerified: Boolean(f.onlyVerified),
+    intent: p.intent === "nearest" || p.intent === "best" ? p.intent : "filter",
+    facilityTypes: Array.isArray(p.facilityTypes) ? p.facilityTypes : [],
+    state: typeof p.state === "string" ? p.state : null,
+    geoAnchor: p.geoAnchor && typeof p.geoAnchor === "object"
+      ? {
+          city: typeof p.geoAnchor.city === "string" ? p.geoAnchor.city : null,
+          isRural: Boolean(p.geoAnchor.isRural),
+        }
+      : null,
+    capabilities: Array.isArray(p.capabilities) ? p.capabilities : [],
+    softSignals: Array.isArray(p.softSignals) ? p.softSignals : [],
+    minTrust: typeof p.minTrust === "number" ? p.minTrust : 0,
+    onlyVerified: Boolean(p.onlyVerified),
+    onlyAnomalies: Boolean(p.onlyAnomalies),
   };
 }
 
