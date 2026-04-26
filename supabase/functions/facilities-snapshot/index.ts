@@ -58,12 +58,13 @@ Deno.serve(async (req) => {
       LIMIT 20000
     `;
 
-    const { rows } = await runSql(sql, [], 20000);
+    const { rows } = await runSql(sql, [], 20000, { cache: !force });
     return jsonResponse(
       { count: rows.length, facilities: rows, generated_at: new Date().toISOString() },
       200,
-      // Browser/CDN cache layer on top of the in-memory edge cache.
-      { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" },
+      force
+        ? { "Cache-Control": "no-store" }
+        : { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" },
     );
   } catch (err) {
     return errorResponse(err);
