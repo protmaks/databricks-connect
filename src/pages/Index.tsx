@@ -58,6 +58,7 @@ const Index = () => {
     setSelected(null);
     setAgentPlan(plan);
     setAgentQuery(query);
+    setFiltersOpen(false);
   };
 
   const handleFiltersChange = (next: FilterState) => {
@@ -68,6 +69,7 @@ const Index = () => {
 
   const handleSelectFromMatches = (f: Facility) => {
     setSelected(f);
+    setFiltersOpen(false);
   };
 
   const handleRefresh = async () => {
