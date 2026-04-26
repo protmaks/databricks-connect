@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { KpiHeader } from "@/components/dashboard/KpiHeader";
 import { FiltersSidebar } from "@/components/dashboard/FiltersSidebar";
 import { MapView } from "@/components/dashboard/MapView";
@@ -12,11 +12,12 @@ import { toast } from "sonner";
 const Index = () => {
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [selected, setSelected] = useState<Facility | null>(null);
+  const queryClient = useQueryClient();
 
   // ONE network request — everything else is computed in-memory.
   const snapshotQ = useQuery({
     queryKey: ["snapshot"],
-    queryFn: fetchSnapshot,
+    queryFn: () => fetchSnapshot(),
   });
 
   useEffect(() => {
@@ -37,9 +38,24 @@ const Index = () => {
   // Cap facility scatter points at zoom-out for perf; all 10k still feed the hex layer.
   const scatterFacilities = useMemo(() => filtered.slice(0, 2000), [filtered]);
 
+  const handleRefresh = async () => {
+    toast.info("Refreshing facilities…");
+    await queryClient.fetchQuery({
+      queryKey: ["snapshot"],
+      queryFn: () => fetchSnapshot(true),
+    });
+    toast.success("Facilities refreshed");
+  };
+
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
-      <KpiHeader kpi={aggregate.kpi} loading={snapshotQ.isLoading} />
+      <KpiHeader
+        kpi={aggregate.kpi}
+        loading={snapshotQ.isLoading}
+        refreshing={snapshotQ.isFetching}
+        onRefresh={handleRefresh}
+        lastUpdated={snapshotQ.dataUpdatedAt || null}
+      />
       <div className="flex min-h-0 flex-1">
         <FiltersSidebar filters={filters} onChange={setFilters} states={aggregate.states} />
         <main className="relative min-w-0 flex-1">

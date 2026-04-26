@@ -1,12 +1,26 @@
 import { motion } from "framer-motion";
-import { Activity, AlertTriangle, MapPin, ShieldCheck, Stethoscope } from "lucide-react";
+import { Activity, AlertTriangle, MapPin, RefreshCw, ShieldCheck, Stethoscope } from "lucide-react";
 import type { KpiSummary } from "@/lib/types";
 import { formatNumber } from "@/lib/trust";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface KpiHeaderProps {
   kpi: KpiSummary | null;
   loading: boolean;
+  refreshing?: boolean;
+  onRefresh?: () => void;
+  lastUpdated?: number | null;
+}
+
+function formatAgo(ts: number | null | undefined): string {
+  if (!ts) return "";
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  return `${h}h ago`;
 }
 
 const cards = [
@@ -43,7 +57,7 @@ const cards = [
   },
 ];
 
-export function KpiHeader({ kpi, loading }: KpiHeaderProps) {
+export function KpiHeader({ kpi, loading, refreshing, onRefresh, lastUpdated }: KpiHeaderProps) {
   return (
     <header className="border-b border-border bg-panel/80 backdrop-blur-sm">
       <div className="flex items-center justify-between gap-6 px-6 py-3">
@@ -90,6 +104,24 @@ export function KpiHeader({ kpi, loading }: KpiHeaderProps) {
               </motion.div>
             );
           })}
+        </div>
+
+        <div className="flex flex-col items-end gap-1">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onRefresh}
+            disabled={refreshing || !onRefresh}
+            className="h-8 gap-1.5"
+          >
+            <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />
+            <span className="text-xs">Refresh</span>
+          </Button>
+          {lastUpdated ? (
+            <span className="font-mono text-[10px] text-muted-foreground">
+              {formatAgo(lastUpdated)}
+            </span>
+          ) : null}
         </div>
       </div>
     </header>

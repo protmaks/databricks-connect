@@ -18,6 +18,8 @@ const EFFECTIVE_TRUST_SQL = `
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
+    const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+    const force = Boolean((body as { force?: boolean }).force);
     const sql = `
       SELECT
         name AS id,
@@ -56,12 +58,13 @@ Deno.serve(async (req) => {
       LIMIT 20000
     `;
 
-    const { rows } = await runSql(sql, [], 20000);
+    const { rows } = await runSql(sql, [], 20000, { cache: !force });
     return jsonResponse(
       { count: rows.length, facilities: rows, generated_at: new Date().toISOString() },
       200,
-      // Browser/CDN cache layer on top of the in-memory edge cache.
-      { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" },
+      force
+        ? { "Cache-Control": "no-store" }
+        : { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" },
     );
   } catch (err) {
     return errorResponse(err);
