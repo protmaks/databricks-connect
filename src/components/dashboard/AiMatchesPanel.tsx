@@ -62,8 +62,8 @@ export function AiMatchesPanel({ plan, results, query, onClose, onSelect }: AiMa
             </Button>
           </header>
 
-          <ScrollArea className="flex-1 scrollbar-thin">
-            <div className="space-y-2 p-3">
+          <ScrollArea className="flex-1 scrollbar-thin [&>[data-radix-scroll-area-viewport]>div]:!block">
+            <div className="w-full min-w-0 space-y-2 overflow-hidden p-3">
               {results.length === 0 && (
                 <div className="rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
                   No facilities matched even partially. Try loosening the query.
