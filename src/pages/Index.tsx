@@ -35,8 +35,8 @@ const Index = () => {
 
   const aggregate = useMemo(() => buildAggregate(filtered), [filtered]);
 
-  // Cap facility scatter points at zoom-out for perf; all 10k still feed the hex layer.
-  const scatterFacilities = useMemo(() => filtered.slice(0, 2000), [filtered]);
+  // Pass all facilities — deck.gl handles 10k points easily and we need them all on zoom-in.
+  const scatterFacilities = filtered;
 
   const handleRefresh = async () => {
     const t = toast.loading("Refreshing facilities…");
