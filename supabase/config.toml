@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.facilities-aggregate]
 verify_jwt = false
 
+[functions.facilities-snapshot]
+verify_jwt = false
+
 [functions.nl-search]
 verify_jwt = false
 
