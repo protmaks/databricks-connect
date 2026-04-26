@@ -40,8 +40,10 @@ const Index = () => {
 
   const handleRefresh = async () => {
     toast.info("Refreshing facilities…");
-    await queryClient.invalidateQueries({ queryKey: ["snapshot"] });
-    await snapshotQ.refetch();
+    await queryClient.fetchQuery({
+      queryKey: ["snapshot"],
+      queryFn: () => fetchSnapshot(true),
+    });
     toast.success("Facilities refreshed");
   };
 
