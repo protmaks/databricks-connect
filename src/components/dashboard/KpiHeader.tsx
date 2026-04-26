@@ -1,12 +1,26 @@
 import { motion } from "framer-motion";
-import { Activity, AlertTriangle, MapPin, ShieldCheck, Stethoscope } from "lucide-react";
+import { Activity, AlertTriangle, MapPin, RefreshCw, ShieldCheck, Stethoscope } from "lucide-react";
 import type { KpiSummary } from "@/lib/types";
 import { formatNumber } from "@/lib/trust";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface KpiHeaderProps {
   kpi: KpiSummary | null;
   loading: boolean;
+  refreshing?: boolean;
+  onRefresh?: () => void;
+  lastUpdated?: number | null;
+}
+
+function formatAgo(ts: number | null | undefined): string {
+  if (!ts) return "";
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  return `${h}h ago`;
 }
 
 const cards = [
