@@ -14,6 +14,7 @@ interface AiMatchesPanelProps {
   query: string;
   onClose: () => void;
   onSelect: (f: Facility) => void;
+  compact?: boolean;
 }
 
 export function AiMatchesPanel({ plan, results, query, onClose, onSelect }: AiMatchesPanelProps) {
