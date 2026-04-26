@@ -47,6 +47,7 @@ export interface Facility {
   tavily_evidence_urls: string[] | null;
   tavily_evidence_snippets: string[] | null;
   last_tavily_check_date: string | null;
+  is_validated_safe: number;
 }
 
 export interface KpiSummary {

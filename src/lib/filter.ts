@@ -20,7 +20,7 @@ export function filterFacilities(all: Facility[], f: FilterState): Facility[] {
     if (stateLc && (x.state ?? "").toLowerCase() !== stateLc) return false;
     if (f.minTrust > 0 && x.trust_score < f.minTrust) return false;
     if (f.onlyVerified && !x.tavily_verified) return false;
-    if (f.onlyAnomalies && !(x.is_suspicious === 1 || x.trust_score < 0.4)) return false;
+    if (f.onlyAnomalies && !((x.is_suspicious === 1 || x.trust_score < 0.4) && x.is_validated_safe !== 1)) return false;
     if (search) {
       const blob = `${x.name} ${x.specialties ?? ""} ${x.district ?? ""}`.toLowerCase();
       if (!blob.includes(search)) return false;
@@ -39,7 +39,7 @@ export function computeKpi(rows: Facility[]): KpiSummary {
   for (const r of rows) {
     totalCapacity += r.capacity ?? 0;
     trustSum += r.trust_score;
-    if (r.is_suspicious === 1 || r.trust_score < 0.4) anomalies++;
+    if ((r.is_suspicious === 1 || r.trust_score < 0.4) && r.is_validated_safe !== 1) anomalies++;
     if (r.tavily_verified) verified++;
     if (r.tavily_check_status) checked++;
     if (r.state) states.add(r.state);
