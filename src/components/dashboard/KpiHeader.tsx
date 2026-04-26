@@ -120,10 +120,14 @@ export function KpiHeader({ kpi, loading, refreshing, onRefresh, lastUpdated }: 
 
         <div className="flex flex-col items-end gap-1">
           <div className="flex items-center gap-2">
-            <Button asChild size="sm" variant="ghost" className="h-8 gap-1.5">
+            <Button
+              asChild
+              size="sm"
+              className="h-8 gap-1.5 bg-primary/15 text-primary hover:bg-primary/25 border border-primary/40 shadow-[0_0_12px_hsl(var(--primary)/0.35)]"
+            >
               <Link to="/about">
                 <Info className="h-3.5 w-3.5" />
-                <span className="text-xs">About</span>
+                <span className="text-xs font-semibold">About / How it works</span>
               </Link>
             </Button>
             <Button
