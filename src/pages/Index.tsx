@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { SlidersHorizontal } from "lucide-react";
 import { KpiHeader } from "@/components/dashboard/KpiHeader";
 import { FiltersSidebar } from "@/components/dashboard/FiltersSidebar";
 import { MapView } from "@/components/dashboard/MapView";
 import { AgentDetailPanel } from "@/components/dashboard/AgentDetailPanel";
 import { AiMatchesPanel } from "@/components/dashboard/AiMatchesPanel";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { fetchSnapshot } from "@/lib/api";
 import { buildAggregate, filterFacilities } from "@/lib/filter";
 import { DEFAULT_FILTERS, type Facility, type FilterState } from "@/lib/types";
