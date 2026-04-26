@@ -32,7 +32,9 @@ const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.j
 
 export function MapView({ points, facilities, onFacilityClick, anomalyMode }: MapViewProps) {
   const [zoom, setZoom] = useState<number>(INITIAL_VIEW_STATE.zoom as unknown as number);
-  const showHex = zoom < HEX_HIDE_ZOOM;
+  // In anomaly mode we always show individual points (no hex aggregation) so 148 anomalies
+  // don't visually inflate into entire painted regions.
+  const showHex = !anomalyMode && zoom < HEX_HIDE_ZOOM;
   // Scale point radius up as we zoom in for better visibility.
   const pointRadius = Math.max(3, Math.min(9, 3 + (zoom - 4) * 0.9));
 
