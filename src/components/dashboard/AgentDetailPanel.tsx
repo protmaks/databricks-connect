@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 interface AgentPanelProps {
   facility: Facility | null;
   onClose: () => void;
+  offsetRight?: number;
 }
 
 function TrustGauge({ score }: { score: number }) {
