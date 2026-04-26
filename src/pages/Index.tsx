@@ -68,6 +68,7 @@ const Index = () => {
             points={aggregate.points}
             facilities={scatterFacilities}
             onFacilityClick={setSelected}
+            anomalyMode={filters.onlyAnomalies}
           />
           <AgentDetailPanel facility={selected} onClose={() => setSelected(null)} />
           {snapshotQ.isLoading && (
