@@ -4,17 +4,20 @@ import { KpiHeader } from "@/components/dashboard/KpiHeader";
 import { FiltersSidebar } from "@/components/dashboard/FiltersSidebar";
 import { MapView } from "@/components/dashboard/MapView";
 import { AgentDetailPanel } from "@/components/dashboard/AgentDetailPanel";
+import { AiMatchesPanel } from "@/components/dashboard/AiMatchesPanel";
 import { fetchSnapshot } from "@/lib/api";
 import { buildAggregate, filterFacilities } from "@/lib/filter";
 import { DEFAULT_FILTERS, type Facility, type FilterState } from "@/lib/types";
+import { runAgentSearch, type QueryPlan } from "@/lib/agentSearch";
 import { toast } from "sonner";
 
 const Index = () => {
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [selected, setSelected] = useState<Facility | null>(null);
+  const [agentPlan, setAgentPlan] = useState<QueryPlan | null>(null);
+  const [agentQuery, setAgentQuery] = useState("");
   const queryClient = useQueryClient();
 
-  // ONE network request — everything else is computed in-memory.
   const snapshotQ = useQuery({
     queryKey: ["snapshot"],
     queryFn: () => fetchSnapshot(),
@@ -35,8 +38,26 @@ const Index = () => {
 
   const aggregate = useMemo(() => buildAggregate(filtered), [filtered]);
 
-  // Pass all facilities — deck.gl handles 10k points easily and we need them all on zoom-in.
-  const scatterFacilities = filtered;
+  // Agent search runs against the FULL snapshot (not the filtered subset),
+  // because the plan already encodes its own hard filters.
+  const agentMatches = useMemo(() => {
+    if (!agentPlan || !snapshotQ.data) return [];
+    return runAgentSearch(snapshotQ.data, agentPlan, 5);
+  }, [agentPlan, snapshotQ.data]);
+
+  const highlightIds = useMemo(
+    () => new Set(agentMatches.map((m) => m.facility.id)),
+    [agentMatches],
+  );
+
+  const handleAgentPlan = (plan: QueryPlan, query: string) => {
+    setAgentPlan(plan);
+    setAgentQuery(query);
+  };
+
+  const handleSelectFromMatches = (f: Facility) => {
+    setSelected(f);
+  };
 
   const handleRefresh = async () => {
     const t = toast.loading("Refreshing facilities…");
@@ -62,15 +83,28 @@ const Index = () => {
         lastUpdated={snapshotQ.dataUpdatedAt || null}
       />
       <div className="flex min-h-0 flex-1">
-        <FiltersSidebar filters={filters} onChange={setFilters} states={aggregate.states} />
+        <FiltersSidebar
+          filters={filters}
+          onChange={setFilters}
+          states={aggregate.states}
+          onAgentPlan={handleAgentPlan}
+        />
         <main className="relative min-w-0 flex-1">
           <MapView
             points={aggregate.points}
-            facilities={scatterFacilities}
+            facilities={filtered}
             onFacilityClick={setSelected}
             anomalyMode={filters.onlyAnomalies}
+            highlightIds={highlightIds}
           />
           <AgentDetailPanel facility={selected} onClose={() => setSelected(null)} />
+          <AiMatchesPanel
+            plan={agentPlan}
+            results={agentMatches}
+            query={agentQuery}
+            onClose={() => setAgentPlan(null)}
+            onSelect={handleSelectFromMatches}
+          />
           {snapshotQ.isLoading && (
             <div className="pointer-events-none absolute right-4 top-4 rounded-md border border-border bg-card/80 px-3 py-1.5 font-mono text-[11px] text-muted-foreground backdrop-blur">
               Loading 10K facilities…
