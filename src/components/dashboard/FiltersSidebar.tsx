@@ -15,15 +15,17 @@ import {
   type FilterState,
   type StateAggregate,
 } from "@/lib/types";
+import type { QueryPlan } from "@/lib/agentSearch";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
   filters: FilterState;
   onChange: (next: FilterState) => void;
   states: StateAggregate[];
+  onAgentPlan: (plan: QueryPlan, query: string) => void;
 }
 
-export function FiltersSidebar({ filters, onChange, states }: SidebarProps) {
+export function FiltersSidebar({ filters, onChange, states, onAgentPlan }: SidebarProps) {
   const [nlQuery, setNlQuery] = useState("");
   const [nlLoading, setNlLoading] = useState(false);
 
@@ -38,10 +40,19 @@ export function FiltersSidebar({ filters, onChange, states }: SidebarProps) {
     if (!nlQuery.trim()) return;
     setNlLoading(true);
     try {
-      const partial = await nlSearch(nlQuery);
-      onChange({ ...DEFAULT_FILTERS, ...partial });
-      toast.success("Filters updated by AI", {
-        description: nlQuery,
+      const plan = await nlSearch(nlQuery);
+      // Sync the simple filters too so the UI reflects the agent's reasoning.
+      onChange({
+        ...DEFAULT_FILTERS,
+        facilityTypes: plan.facilityTypes,
+        state: plan.state,
+        minTrust: plan.minTrust,
+        onlyVerified: plan.onlyVerified,
+        onlyAnomalies: plan.onlyAnomalies,
+      });
+      onAgentPlan(plan, nlQuery);
+      toast.success("AI agent ran multi-attribute search", {
+        description: `${plan.capabilities.length} caps · ${plan.softSignals.length} signals${plan.geoAnchor?.city ? ` · near ${plan.geoAnchor.city}` : ""}`,
       });
     } catch (e) {
       toast.error("AI search failed", { description: e instanceof Error ? e.message : "Unknown error" });
@@ -62,7 +73,7 @@ export function FiltersSidebar({ filters, onChange, states }: SidebarProps) {
             value={nlQuery}
             onChange={(e) => setNlQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && runNl()}
-            placeholder="Emergency trauma in Bihar"
+            placeholder="Nearest in rural Bihar that can do an emergency appendectomy"
             className="pl-8 bg-background/60 font-mono text-xs"
           />
         </div>
@@ -75,6 +86,9 @@ export function FiltersSidebar({ filters, onChange, states }: SidebarProps) {
           {nlLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
           Search with AI
         </Button>
+        <p className="text-[10px] leading-relaxed text-muted-foreground">
+          Multi-attribute reasoning: capabilities, geography, operational signals, ranked top-5 with explanations.
+        </p>
       </div>
 
       <ScrollArea className="flex-1 scrollbar-thin">
