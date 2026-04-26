@@ -48,7 +48,7 @@ function TrustGauge({ score }: { score: number }) {
   );
 }
 
-export function AgentDetailPanel({ facility, onClose }: AgentPanelProps) {
+export function AgentDetailPanel({ facility, onClose, offsetRight = 0 }: AgentPanelProps) {
   const [report, setReport] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
