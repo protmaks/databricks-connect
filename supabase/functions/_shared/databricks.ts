@@ -2,7 +2,7 @@
 // Uses statement-execution API and polls until SUCCEEDED.
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/databricks";
-const DEFAULT_WAREHOUSE_ID = "5c76d84b9c61f80d";
+const DEFAULT_WAREHOUSE_ID = "b1032b820d2ffe19";
 
 export interface SqlParam {
   name: string;
@@ -18,8 +18,8 @@ export interface SqlResult {
 function getEnv(): { lovable: string; dbx: string; warehouse: string } {
   const lovable = Deno.env.get("LOVABLE_API_KEY");
   if (!lovable) throw new Error("LOVABLE_API_KEY is not configured");
-  const dbx = Deno.env.get("DATABRICKS_API_KEY");
-  if (!dbx) throw new Error("DATABRICKS_API_KEY is not configured");
+  const dbx = Deno.env.get("DATABRICKS_API_KEY_1") ?? Deno.env.get("DATABRICKS_API_KEY");
+  if (!dbx) throw new Error("DATABRICKS_API_KEY_1 is not configured");
   const warehouse = Deno.env.get("DATABRICKS_WAREHOUSE_ID") ?? DEFAULT_WAREHOUSE_ID;
   return { lovable, dbx, warehouse };
 }
