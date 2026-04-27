@@ -2,7 +2,7 @@
 // Uses statement-execution API and polls until SUCCEEDED.
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/databricks";
-const DEFAULT_WAREHOUSE_ID = "b1032b820d2ffe19";
+const DEFAULT_WAREHOUSE_ID = "29757589f07e2564";
 
 export interface SqlParam {
   name: string;
